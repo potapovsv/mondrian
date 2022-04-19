@@ -33,6 +33,7 @@ import mondrian.olap.fun.AggregateFunDef;
 import mondrian.olap.fun.MemberExtractingVisitor;
 import mondrian.olap.fun.ParenthesesFunDef;
 import mondrian.olap.fun.ValidMeasureFunDef;
+import mondrian.olap.type.SetType;
 import mondrian.resource.MondrianResource;
 import mondrian.rolap.RestrictedMemberReader.MultiCardinalityDefaultMember;
 import mondrian.rolap.RolapHierarchy.LimitedRollupMember;
@@ -663,8 +664,13 @@ public class SqlConstraintUtils {
           expandExpressions( member, innerExp, evaluator, expandedSet );
         }
       } else {
-        // Extract the list of members
-        expandSetFromCalculatedMember( evaluator, member, expandedSet );
+        if(fun.getType() instanceof SetType ) {
+          // Extract the list of members
+          expandSetFromCalculatedMember( evaluator, member, expandedSet );
+        }
+        else {
+          expandedSet.addMember( member );
+        }
       }
     } else if ( expression instanceof MemberExpr ) {
       expandedSet.addMember( ( (MemberExpr) expression ).getMember() );

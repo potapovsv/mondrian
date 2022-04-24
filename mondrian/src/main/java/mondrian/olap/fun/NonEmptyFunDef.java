@@ -69,15 +69,18 @@ class NonEmptyFunDef extends FunDefBase {
         public TupleList evaluateList(Evaluator evaluator) {
             final int savepoint = evaluator.savepoint();
             try {
+                evaluator.setNonEmpty(false);
+
+                TupleList rightTuples = null;
+                if(this.listCalc2 != null) {
+                    rightTuples = listCalc2.evaluateList(evaluator);
+                }
+
                 evaluator.setNonEmpty(true);
 
                 TupleList leftTuples = listCalc1.evaluateList(evaluator);
                 if (leftTuples.isEmpty()) {
                     return TupleCollections.emptyList(leftTuples.getArity());
-                }
-                TupleList rightTuples = null;
-                if(this.listCalc2 != null) {
-                    rightTuples = listCalc2.evaluateList(evaluator);
                 }
                 TupleList result =
                         TupleCollections.createList(leftTuples.getArity());

@@ -6,7 +6,7 @@
 //
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2018 Hitachi Vantara and others
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -629,16 +629,17 @@ RME is this right
             return sqlQuery.toSqlAndTypes();
         }
 
+        // in non empty mode the level table must be joined to the fact
+        // table
+        // place fact table first in a query
+        constraint.addLevelConstraint(sqlQuery, null, aggStar, level);
+
         hierarchy.addToFrom(sqlQuery, level.getKeyExp());
         String q = level.getKeyExp().getExpression(sqlQuery);
         String idAlias = sqlQuery.addSelect(q, level.getInternalType());
         if(needsGroupBy) {
             sqlQuery.addGroupBy(q, idAlias);
         }
-
-        // in non empty mode the level table must be joined to the fact
-        // table
-        constraint.addLevelConstraint(sqlQuery, null, aggStar, level);
 
         if (levelCollapsed) {
             // if this is a collapsed level, add a join between key and aggstar

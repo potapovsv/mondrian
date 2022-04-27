@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2018 Hitachi Vantara and others
+// Copyright (C) 2022 Sergei Semenkov
 // All Rights Reserved.
 //
 // jhyde, 12 August, 2001
@@ -1746,7 +1747,6 @@ public class RolapStar {
             boolean failIfExists,
             boolean joinToParent)
         {
-            query.addFrom(relation, alias, failIfExists);
             Util.assertTrue((parent == null) == (joinCondition == null));
             if (joinToParent) {
                 if (parent != null) {
@@ -1756,6 +1756,7 @@ public class RolapStar {
                     query.addWhere(joinCondition.toString(query));
                 }
             }
+            query.addFrom(relation, alias, failIfExists);
         }
 
         /**

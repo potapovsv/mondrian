@@ -7,7 +7,7 @@
 // Copyright (C) 2003-2005 Julian Hyde
 // Copyright (C) 2005-2018 Hitachi Vantara
 // Copyright (C) 2019 Topsoft
-// Copyright (C) 2020 - 2022 Sergei Semenkov
+// Copyright (C) 2020-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 
@@ -15,6 +15,7 @@ package mondrian.xmla;
 
 import mondrian.olap.*;
 import mondrian.rolap.RolapHierarchy;
+import mondrian.server.FileRepository;
 import mondrian.util.Composite;
 
 import org.olap4j.OlapConnection;
@@ -321,6 +322,7 @@ public enum RowsetDefinition {
         new Column[] {
                 DiscoverXmlMetadataRowset.METADATA,
                 // Restrictions
+                DiscoverXmlMetadataRowset.ObjectType,
                 DiscoverXmlMetadataRowset.DatabaseID,
         },
         null /* not sorted */)
@@ -2395,6 +2397,15 @@ public enum RowsetDefinition {
                 Column.REQUIRED,
                 "An XML document that describes the object requested by the restriction.");
 
+        private static final Column ObjectType = new Column(
+                "ObjectType",
+                Type.String,
+                null,
+                Column.RESTRICTION,
+                Column.OPTIONAL,
+                "Can be Database or Schema. If Databes - return Datasources.xml. If Schema returns schema xml file " +
+                        "by DatabaseId.");
+
         private static final Column DatabaseID = new Column(
                 "DatabaseID",
                 Type.String,
@@ -2407,23 +2418,44 @@ public enum RowsetDefinition {
                 XmlaResponse response, OlapConnection connection, List<Row> rows)
                 throws XmlaException
         {
-            for (Catalog catalog
-                    : catIter(connection, catalogNameCond)) {
-                String catalogStr;
+            String objectType = this.getRestrictionValueAsString(ObjectType);
+            if(objectType != null && objectType.equals("Database")) {
                 try {
-                    final String catalogUrl = ((mondrian.olap4j.MondrianOlap4jConnection)connection)
-                            .getMondrianConnection().getCatalogName();
-                    catalogStr = Util.readVirtualFileAsString(catalogUrl);
+                    MondrianServer mondrianServer = MondrianServer.forConnection(
+                            ((mondrian.olap4j.MondrianOlap4jConnection)connection)
+                                    .getMondrianConnection());
+
+                    mondrian.server.Repository repository = mondrianServer.getRepository();
+                    if(repository instanceof FileRepository) {
+                        FileRepository fileRepository = (FileRepository)repository;
+                        String repositoryContent = fileRepository.getContent();
+                        Row row = new Row();
+                        row.set(METADATA.name, repositoryContent);
+                        addRow(row, rows);
+                    }
                 } catch (OlapException e) {
                     throw new RuntimeException(e);
                 }
-                catch (IOException e) {
-                    throw new RuntimeException(e);
+            }
+            else if(objectType != null && objectType.equals("Schema")) {
+                for (Catalog catalog
+                        : catIter(connection, catalogNameCond)) {
+                    String catalogStr;
+                    try {
+                        final String catalogUrl = ((mondrian.olap4j.MondrianOlap4jConnection)connection)
+                                .getMondrianConnection().getCatalogName();
+                        catalogStr = Util.readVirtualFileAsString(catalogUrl);
+                    } catch (OlapException e) {
+                        throw new RuntimeException(e);
+                    }
+                    catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Row row = new Row();
+                    row.set(METADATA.name, catalogStr);
+                    addRow(row, rows);
+                    break;
                 }
-                Row row = new Row();
-                row.set(METADATA.name, catalogStr);
-                addRow(row, rows);
-                break;
             }
         }
 

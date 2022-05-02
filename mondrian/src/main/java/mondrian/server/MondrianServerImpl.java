@@ -6,7 +6,7 @@
 //
 // Copyright (C) 2006-2017 Hitachi Vantara
 // Copyright (C) 2019 Topsoft. All rights reserved.
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.server;
@@ -479,6 +479,10 @@ class MondrianServerImpl
             }
         }
         return result;
+    }
+
+    public Repository getRepository() {
+        return repository;
     }
 }
 

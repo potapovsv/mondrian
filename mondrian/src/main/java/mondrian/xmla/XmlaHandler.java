@@ -16,6 +16,7 @@ package mondrian.xmla;
 import mondrian.olap.MondrianProperties;
 import mondrian.olap.Util;
 import mondrian.olap4j.IMondrianOlap4jProperty;
+import mondrian.server.FileRepository;
 import mondrian.util.CompositeList;
 import mondrian.xmla.impl.DefaultSaxWriter;
 
@@ -848,29 +849,60 @@ public class XmlaHandler {
             }
             else if(defaultXmlaRequest.getCommand().toUpperCase().equals("ALTER")) {
                 boolean validate =  "true".equals(defaultXmlaRequest.getProperties().get("Validate"));
-                final ServerObject serverObject = ((mondrian.xmla.impl.DefaultXmlaRequest)request).getServerObject();
-                if(serverObject != null) {
-                    final OlapConnection connection1 = getConnection(null, serverObject.getDatabaseID(), null);
+                boolean alterDatabase = "Database".equals(defaultXmlaRequest.getProperties().get("ObjectType"));
+                boolean alterSchema = "Schema".equals(defaultXmlaRequest.getProperties().get("ObjectType"));
 
-                    try {
-
-                        final mondrian.rolap.RolapConnection rolapConnection1 =
-                                ((mondrian.olap4j.MondrianOlap4jConnection) connection1).getMondrianConnection();
-                        final String catalogUrl = rolapConnection1.getCatalogName();
+                if(alterDatabase) {
+                    final OlapConnection connection1 = getConnection(request, Collections.<String, String>emptyMap());
+                    final mondrian.rolap.RolapConnection rolapConnection1 =
+                            ((mondrian.olap4j.MondrianOlap4jConnection) connection1).getMondrianConnection();
+                    final mondrian.olap.MondrianServer mondrianServer =
+                            mondrian.olap.MondrianServer.forConnection(rolapConnection1);
+                    final mondrian.server.Repository repository = mondrianServer.getRepository();
+                    if(repository instanceof FileRepository) {
+                        mondrian.server.FileRepository fileRepository = (FileRepository)repository;
                         final String objectDefinition = ((mondrian.xmla.impl.DefaultXmlaRequest) request).getObjectDefinition();
+                        fileRepository.setContent(objectDefinition);
+                    }
+                }
+                else if(alterSchema) {
+                    final ServerObject serverObject = ((mondrian.xmla.impl.DefaultXmlaRequest) request).getServerObject();
+                    if (serverObject != null) {
+                        final OlapConnection connection1 = getConnection(null, serverObject.getDatabaseID(), null);
 
-                        //Try to create a schema to check xml.
-                        mondrian.rolap.RolapSchema prevSchema = rolapConnection1.getSchema();
+                        try {
 
-                        if (validate) {
+                            final mondrian.rolap.RolapConnection rolapConnection1 =
+                                    ((mondrian.olap4j.MondrianOlap4jConnection) connection1).getMondrianConnection();
+                            final String catalogUrl = rolapConnection1.getCatalogName();
+                            final String objectDefinition = ((mondrian.xmla.impl.DefaultXmlaRequest) request).getObjectDefinition();
+
+                            //Try to create a schema to check xml.
+                            mondrian.rolap.RolapSchema prevSchema = rolapConnection1.getSchema();
+
+                            if (validate) {
 //                        if (true) {
-                            List<Column> columns = new ArrayList<>();
-                            columns.add(
-                                    new Column("Text", Types.VARCHAR, 0)
-                            );
-                            List<Object[]> rows = new ArrayList<Object[]>();
+                                List<Column> columns = new ArrayList<>();
+                                columns.add(
+                                        new Column("Text", Types.VARCHAR, 0)
+                                );
+                                List<Object[]> rows = new ArrayList<Object[]>();
 
-                            try {
+                                try {
+                                    mondrian.rolap.RolapSchema rolapSchema = new mondrian.rolap.RolapSchema(
+                                            prevSchema.getKey(),
+                                            null,
+                                            catalogUrl,
+                                            objectDefinition,
+                                            rolapConnection1.getConnectInfo(),
+                                            null
+                                    );
+                                } catch (RuntimeException e) {
+                                    rows.add(new Object[]{e.getMessage()});
+                                }
+
+                                result = new TabularRowSet(columns, rows);
+                            } else {
                                 mondrian.rolap.RolapSchema rolapSchema = new mondrian.rolap.RolapSchema(
                                         prevSchema.getKey(),
                                         null,
@@ -879,43 +911,30 @@ public class XmlaHandler {
                                         rolapConnection1.getConnectInfo(),
                                         null
                                 );
-                            } catch (RuntimeException e) {
-                                rows.add(new Object[]{e.getMessage()});
-                            }
 
-                            result = new TabularRowSet(columns, rows);
-                        } else {
-                            mondrian.rolap.RolapSchema rolapSchema = new mondrian.rolap.RolapSchema(
-                                    prevSchema.getKey(),
-                                    null,
-                                    catalogUrl,
-                                    objectDefinition,
-                                    rolapConnection1.getConnectInfo(),
-                                    null
-                            );
-
-                            String filePath = java.net.URI.create(catalogUrl).getPath();
-                            java.io.BufferedWriter out = new java.io.BufferedWriter(new java.io.FileWriter(filePath));
-                            try {
-                                out.write(objectDefinition);
-                            } finally {
-                                out.close();
+                                String filePath = java.net.URI.create(catalogUrl).getPath();
+                                java.io.BufferedWriter out = new java.io.BufferedWriter(new java.io.FileWriter(filePath));
+                                try {
+                                    out.write(objectDefinition);
+                                } finally {
+                                    out.close();
+                                }
                             }
+                        } catch (org.olap4j.OlapException oe) {
+                            throw new XmlaException(
+                                    CLIENT_FAULT_FC,
+                                    "3238658121",
+                                    USM_DOM_PARSE_FAULT_FS,
+                                    oe);
+                        } catch (java.io.IOException e) {
+                            throw new XmlaException(
+                                    CLIENT_FAULT_FC,
+                                    "3238658121",
+                                    USM_DOM_PARSE_FAULT_FS,
+                                    e);
                         }
-                    } catch (org.olap4j.OlapException oe) {
-                        throw new XmlaException(
-                                CLIENT_FAULT_FC,
-                                "3238658121",
-                                USM_DOM_PARSE_FAULT_FS,
-                                oe);
-                    } catch (java.io.IOException e) {
-                        throw new XmlaException(
-                                CLIENT_FAULT_FC,
-                                "3238658121",
-                                USM_DOM_PARSE_FAULT_FS,
-                                e);
-                    }
 
+                    }
                 }
             }
             else if(defaultXmlaRequest.getCommand().toUpperCase().equals("STATEMENT")) {

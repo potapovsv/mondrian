@@ -1198,6 +1198,22 @@ public class SqlTupleReader implements TupleReader {
     Evaluator evaluator = getEvaluator( constraint );
     AggStar aggStar = chooseAggStar( constraint, evaluator, baseCube );
 
+    // Add constraints at first to ensure that level tables are added last
+    boolean prependConstraint = false;
+    if (constraint instanceof SqlContextConstraint && ((SqlContextConstraint) constraint).isJoinRequired()) {
+      if(aggStar != null) {
+        aggStar.getFactTable().addToFrom(sqlQuery, false, false);
+        prependConstraint = true;
+      }
+      else if (baseCube != null && !baseCube.isVirtual()) {
+        baseCube.getStar().getFactTable().addToFrom(sqlQuery, false, false);
+        prependConstraint = true;
+      }
+      if (prependConstraint) {
+        constraint.addConstraint( sqlQuery, baseCube, aggStar );
+      }
+    }
+
     // add the selects for all levels to fetch
     for ( TargetBase target : targetGroup ) {
       // if we're going to be enumerating the values for this target,
@@ -1212,7 +1228,9 @@ public class SqlTupleReader implements TupleReader {
       }
     }
 
-    constraint.addConstraint( sqlQuery, baseCube, aggStar );
+    if (!prependConstraint) {
+      constraint.addConstraint( sqlQuery, baseCube, aggStar );
+    }
 
     return sqlQuery.toSqlAndTypes();
   }

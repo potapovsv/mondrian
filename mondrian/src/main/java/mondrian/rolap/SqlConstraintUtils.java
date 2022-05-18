@@ -7,7 +7,7 @@
 // Copyright (C) 2004-2005 TONBELLER AG
 // Copyright (C) 2005-2005 Julian Hyde
 // Copyright (C) 2005-2020 Hitachi Vantara and others
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -664,13 +664,8 @@ public class SqlConstraintUtils {
           expandExpressions( member, innerExp, evaluator, expandedSet );
         }
       } else {
-        if(fun.getType() instanceof SetType ) {
-          // Extract the list of members
-          expandSetFromCalculatedMember( evaluator, member, expandedSet );
-        }
-        else {
-          expandedSet.addMember( member );
-        }
+        // Extract the list of members
+        expandSetFromCalculatedMember( evaluator, expression, expandedSet );
       }
     } else if ( expression instanceof MemberExpr ) {
       expandedSet.addMember( ( (MemberExpr) expression ).getMember() );
@@ -726,11 +721,11 @@ public class SqlConstraintUtils {
     return false;
   }
 
-  public static void expandSetFromCalculatedMember( Evaluator evaluator, Member member,
+    public static void expandSetFromCalculatedMember( Evaluator evaluator, Exp expression,
       TupleConstraintStruct expandedSet ) {
-    assert member.getExpression() instanceof ResolvedFunCall;
+    assert expression instanceof ResolvedFunCall;
 
-    ResolvedFunCall fun = (ResolvedFunCall) member.getExpression();
+    ResolvedFunCall fun = (ResolvedFunCall) expression;
 
     // Calling the main set evaluator to extend this.
     Exp exp = fun.getArg( 0 );

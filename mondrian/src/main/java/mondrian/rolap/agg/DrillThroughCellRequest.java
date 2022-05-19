@@ -24,6 +24,9 @@ import java.util.List;
  */
 public class DrillThroughCellRequest extends CellRequest {
 
+    private final List<RolapStar.Column> drillThroughItems =
+            new ArrayList<RolapStar.Column>();
+
     private final List<RolapStar.Column> drillThroughColumns =
         new ArrayList<RolapStar.Column>();
 
@@ -51,6 +54,7 @@ public class DrillThroughCellRequest extends CellRequest {
 
     public void addDrillThroughColumn(RolapStar.Column column) {
         this.drillThroughColumns.add(column);
+        this.drillThroughItems.add(column);
     }
 
     public boolean includeInSelect(RolapStar.Column column) {
@@ -64,6 +68,7 @@ public class DrillThroughCellRequest extends CellRequest {
 
     public void addDrillThroughMeasure(RolapStar.Measure measure) {
         this.drillThroughMeasures.add(measure);
+        this.drillThroughItems.add(measure);
     }
 
     public boolean includeInSelect(RolapStar.Measure measure) {
@@ -82,6 +87,8 @@ public class DrillThroughCellRequest extends CellRequest {
     public List<OlapElement> getNonApplicableMembers() {
         return nonApplicableMembers;
     }
+
+    public List<RolapStar.Column> getDrillThroughItems() { return this.drillThroughItems; }
 }
 
 // End DrillThroughCellRequest.java

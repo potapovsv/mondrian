@@ -427,7 +427,7 @@ public class RolapCube extends CubeBase {
                         drillThroughAction.name,
                         drillThroughAction.caption,
                         drillThroughAction.description,
-                        drillThroughAction._default != null && drillThroughAction._default.equals("true"),
+                        drillThroughAction._default != null && drillThroughAction._default,
                         columns
                 );
                 this.actionList.add(rolapDrillThroughAction);

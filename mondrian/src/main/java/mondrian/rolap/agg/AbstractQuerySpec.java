@@ -190,7 +190,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
         }
 
         List<RolapStar.Column> items = getItems();
-        for(Object item : getItems()) {
+        for(Object item : items) {
             if(item instanceof RolapStar.Measure) {
                 addMeasure((RolapStar.Measure)item, sqlQuery);
             }

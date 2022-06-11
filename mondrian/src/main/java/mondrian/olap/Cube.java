@@ -6,7 +6,8 @@
 //
 // Copyright (C) 1999-2005 Julian Hyde
 // Copyright (C) 2005-2017 Hitachi Vantara and others
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021 Topsoft
+// Copyright (c) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 

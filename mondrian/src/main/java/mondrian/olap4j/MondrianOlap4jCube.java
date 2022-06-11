@@ -5,7 +5,8 @@
 * You must accept the terms of that agreement to use this software.
 *
 * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
-* Copyright (c) 2021 Sergei Semenkov
+* Copyright (C) 2021 Topsoft
+* Copyright (c) 2021-2022 Sergei Semenkov
 */
 
 package mondrian.olap4j;

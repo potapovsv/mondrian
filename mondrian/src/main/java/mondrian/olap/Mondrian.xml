@@ -8,7 +8,8 @@
   ==
   == Copyright (C) 2001-2005 Julian Hyde
   == Copyright (C) 2005-2019 Hitachi Vantara and others
-  == Copyright (C) 2021 Sergei Semenkov
+  == Copyright (C) 2019-2021 Topsoft
+  == Copyright (C) 2021-2022 Sergei Semenkov
   == All Rights Reserved.
   ==
   == This file defines an MMM schema for an Olap schema.

@@ -87,15 +87,16 @@ class NonEmptyFunDef extends FunDefBase {
 
 
                 for (List<Member> leftTuple : leftTuples) {
-                    if(rightTuples != null && !rightTuples.isEmpty()) {
-                        for (List<Member> rightTuple : rightTuples) {
-                            evaluator.setContext(leftTuple);
-                            evaluator.setContext(rightTuple);
-                            Object tupleResult = evaluator.evaluateCurrent();
-                            if (tupleResult != null)
-                            {
-                                result.add(leftTuple);
-                                break;
+                    if(this.listCalc2 != null) {
+                        if (rightTuples != null && !rightTuples.isEmpty()) {
+                            for (List<Member> rightTuple : rightTuples) {
+                                evaluator.setContext(leftTuple);
+                                evaluator.setContext(rightTuple);
+                                Object tupleResult = evaluator.evaluateCurrent();
+                                if (tupleResult != null) {
+                                    result.add(leftTuple);
+                                    break;
+                                }
                             }
                         }
                     }

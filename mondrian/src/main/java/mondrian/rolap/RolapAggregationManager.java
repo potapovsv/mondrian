@@ -350,6 +350,9 @@ public abstract class RolapAggregationManager {
 
         } else {
             for (int i = 1; i < members.length; i++) {
+                if(members[i].isNull()) {
+                    return null;
+                }
                 if (!(members[i] instanceof RolapCubeMember)) {
                     continue;
                 }

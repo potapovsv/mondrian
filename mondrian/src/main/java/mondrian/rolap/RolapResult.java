@@ -396,6 +396,14 @@ public class RolapResult extends ResultBase {
       //
       axisMembers.setSlicer( true );
       loadMembers( emptyNonAllMembers, evaluator, query.getSlicerAxis(), query.slicerCalc, axisMembers );
+
+      if(query.slicerCalc != null && query.slicerCalc.getType() instanceof SetType) {
+        //Slicer contains empty set
+        for(Hierarchy hierarchy: ((SetType)query.slicerCalc.getType()).getHierarchies()) {
+          axisMembers.addMember(((RolapCubeHierarchy)hierarchy).getNullMember());
+        }
+      }
+
       axisMembers.setSlicer( false );
 
       // Save unadulterated context for the next time we need to evaluate

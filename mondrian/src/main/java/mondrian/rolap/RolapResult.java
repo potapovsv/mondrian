@@ -6,7 +6,7 @@
 //
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2021 Hitachi Vantara and others
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -397,7 +397,7 @@ public class RolapResult extends ResultBase {
       axisMembers.setSlicer( true );
       loadMembers( emptyNonAllMembers, evaluator, query.getSlicerAxis(), query.slicerCalc, axisMembers );
 
-      if(query.slicerCalc != null && query.slicerCalc.getType() instanceof SetType) {
+      if(axisMembers.isEmpty() && query.slicerCalc != null && query.slicerCalc.getType() instanceof SetType) {
         //Slicer contains empty set
         for(Hierarchy hierarchy: ((SetType)query.slicerCalc.getType()).getHierarchies()) {
           axisMembers.addMember(((RolapCubeHierarchy)hierarchy).getNullMember());

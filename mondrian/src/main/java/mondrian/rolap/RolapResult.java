@@ -854,6 +854,14 @@ public class RolapResult extends ResultBase {
 
   protected void loadMembers( List<List<Member>> nonAllMembers, RolapEvaluator evaluator, QueryAxis axis, Calc calc,
       AxisMemberList axisMembers ) {
+
+    // If evaluator contains Null member - return;
+    for(Member member: evaluator.getMembers()) {
+      if(member.isNull()) {
+        return;
+      }
+    }
+
     int attempt = 0;
     evaluator.setCellReader( batchingReader );
     while ( true ) {
@@ -904,8 +912,18 @@ public class RolapResult extends ResultBase {
 
   TupleIterable evalExecute( List<List<Member>> nonAllMembers, int cnt, RolapEvaluator evaluator, QueryAxis queryAxis,
       Calc calc ) {
-    final int savepoint = evaluator.savepoint();
     final int arity = calc == null ? 0 : calc.getType().getArity();
+
+    // If evaluator contains Null member - return empty list;
+    for(Member member: evaluator.getMembers()) {
+      if(member.isNull()) {
+        TupleList axisResult = TupleCollections.emptyList( arity );
+        return axisResult;
+      }
+    }
+
+    final int savepoint = evaluator.savepoint();
+
     if ( cnt < 0 ) {
       try {
         final TupleIterable axis = executeAxis( evaluator, queryAxis, calc, true, null );

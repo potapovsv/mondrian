@@ -4,7 +4,7 @@
 // http://www.eclipse.org/legal/epl-v10.html.
 // You must accept the terms of that agreement to use this software.
 //
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 
@@ -16,8 +16,10 @@ public class RolapDrillThroughMeasure extends RolapDrillThroughColumn {
     private final Member measure;
 
     public RolapDrillThroughMeasure(
+            String name,
             Member measure
     ) {
+        super(name);
         this.measure = measure;
     }
 

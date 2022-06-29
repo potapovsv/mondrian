@@ -347,6 +347,7 @@ public class RolapCube extends CubeBase {
                         MondrianDef.DrillThroughAttribute drillThroughAttribute =
                                 (MondrianDef.DrillThroughAttribute)drillThroughColumn;
 
+                        String name = drillThroughAttribute.name;
                         Dimension dimension = null;
                         Hierarchy hierarchy = null;
                         Level level = null;
@@ -395,6 +396,7 @@ public class RolapCube extends CubeBase {
 
                         columns.add(
                                 new RolapDrillThroughAttribute(
+                                        name,
                                         dimension,
                                         hierarchy,
                                         level
@@ -406,9 +408,10 @@ public class RolapCube extends CubeBase {
                         MondrianDef.DrillThroughMeasure drillThroughMeasure =
                                 (MondrianDef.DrillThroughMeasure)drillThroughColumn;
 
+                        String name = drillThroughMeasure.name;
                         Member measure = null;
                         for(Member currntMeasure: this.getMeasures()) {
-                            if(currntMeasure.getName().equals(drillThroughMeasure.name)) {
+                            if(currntMeasure.getName().equals(drillThroughMeasure.measure)) {
                                 measure = currntMeasure;
                                 break;
                             }
@@ -419,7 +422,7 @@ public class RolapCube extends CubeBase {
                                             + drillThroughMeasure.name + "' not found");
                         }
                         columns.add(
-                                new RolapDrillThroughMeasure(measure)
+                                new RolapDrillThroughMeasure(name, measure)
                         );
                     }
                 }

@@ -4,7 +4,7 @@
 // http://www.eclipse.org/legal/epl-v10.html.
 // You must accept the terms of that agreement to use this software.
 //
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 
@@ -13,6 +13,13 @@ package mondrian.rolap;
 import mondrian.olap.OlapElement;
 
 public abstract class RolapDrillThroughColumn {
+    private final String  name;
+
+    protected RolapDrillThroughColumn(String name) {
+        this.name = name;
+    }
+
+    public String getName() { return this.name; };
     public abstract OlapElement getOlapElement();
 }
 

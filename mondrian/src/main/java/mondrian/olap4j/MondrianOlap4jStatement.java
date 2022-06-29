@@ -5,7 +5,7 @@
 * You must accept the terms of that agreement to use this software.
 *
 * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
-* Copyright (c) 2021 Sergei Semenkov
+* Copyright (c) 2021-2022 Sergei Semenkov
 */
 
 package mondrian.olap4j;
@@ -13,6 +13,7 @@ package mondrian.olap4j;
 import mondrian.calc.ResultStyle;
 import mondrian.olap.*;
 import mondrian.rolap.RolapConnection;
+import mondrian.rolap.SqlStatement;
 import mondrian.server.*;
 import mondrian.util.Pair;
 
@@ -97,12 +98,12 @@ abstract class MondrianOlap4jStatement
                 (MondrianOlap4jCell) cellSet.getCell(coords);
 
             List<OlapElement> fields = drillThrough.getReturnList();
+            mondrian.rolap.RolapDrillThroughAction rolapDrillThroughAction = null;
             if(fields.size() == 0) {
                 MondrianOlap4jCube mondrianOlap4jCube = (MondrianOlap4jCube)cellSet.getMetaData().getCube();
                 mondrian.rolap.RolapCube rolapCube = (mondrian.rolap.RolapCube)mondrianOlap4jCube.getOlapElement();
 
-                mondrian.rolap.RolapDrillThroughAction rolapDrillThroughAction =
-                        rolapCube.getDefaultDrillThroughAction();
+                rolapDrillThroughAction = rolapCube.getDefaultDrillThroughAction();
                 if(rolapDrillThroughAction != null) {
                     fields = rolapDrillThroughAction.getOlapElements();
                 }
@@ -116,6 +117,7 @@ abstract class MondrianOlap4jStatement
                     true,
                     null,
                     rowCountSlot);
+            SqlStatement.DrillThroughResults.put(resultSet.getStatement(), rolapDrillThroughAction);
             if (resultSet == null) {
                 throw new OlapException(
                     "Cannot do DrillThrough operation on the cell");

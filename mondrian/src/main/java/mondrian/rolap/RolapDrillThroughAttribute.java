@@ -4,7 +4,7 @@
 // http://www.eclipse.org/legal/epl-v10.html.
 // You must accept the terms of that agreement to use this software.
 //
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 
@@ -18,10 +18,12 @@ public class RolapDrillThroughAttribute extends RolapDrillThroughColumn {
     private final Level level;
 
     public RolapDrillThroughAttribute(
+            String name,
             Dimension dimension,
             Hierarchy hierarchy,
             Level level
     ) {
+        super(name);
         this.dimension = dimension;
         this.hierarchy = hierarchy;
         this.level = level;

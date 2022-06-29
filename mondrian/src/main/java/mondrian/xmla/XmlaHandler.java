@@ -16,6 +16,7 @@ package mondrian.xmla;
 import mondrian.olap.MondrianProperties;
 import mondrian.olap.Util;
 import mondrian.olap4j.IMondrianOlap4jProperty;
+import mondrian.rolap.SqlStatement;
 import mondrian.server.FileRepository;
 import mondrian.util.CompositeList;
 import mondrian.xmla.impl.DefaultSaxWriter;
@@ -57,6 +58,9 @@ import java.util.Date;
 
 import static mondrian.xmla.XmlaConstants.*;
 import static org.olap4j.metadata.XmlaConstants.*;
+
+import mondrian.rolap.RolapDrillThroughAction;
+import mondrian.rolap.RolapDrillThroughColumn;
 
 import mondrian.server.Locus;
 
@@ -1719,7 +1723,16 @@ public class XmlaHandler {
                     tabFields,
                     rowCountSlot);
             int rowCount = enableRowCount ? rowCountSlot[0] : -1;
-            return new TabularRowSet(resultSet, rowCount);
+            RolapDrillThroughAction rolapDrillThroughAction =
+                    SqlStatement.DrillThroughResults.get(resultSet.getStatement());
+            TabularRowSet tabularRowSet = new TabularRowSet(resultSet, rowCount);
+            if(rolapDrillThroughAction != null) {
+                List<RolapDrillThroughColumn> rolapDrillThroughColumns = rolapDrillThroughAction.getColumns();
+                for(int i = 0; i < rolapDrillThroughColumns.size(); i++) {
+                    tabularRowSet.setColumnName(i, rolapDrillThroughColumns.get(i).getName());
+                }
+            }
+            return tabularRowSet;
         } catch (XmlaException xex) {
             throw xex;
         } catch (SQLException sqle) {
@@ -1761,19 +1774,24 @@ public class XmlaHandler {
     }
 
     static class Column {
-        private final String name;
-        private final String encodedName;
+        private String name;
+        private String encodedName;
         private final String xsdType;
 
         Column(String name, int type, int scale) {
+            this.setName(name);
+
+            this.xsdType = sqlToXsdType(type, scale);
+        }
+
+        public void setName(String name) {
             this.name = name;
 
             // replace invalid XML element name, like " ", with "_x0020_" in
             // column headers, otherwise will generate a badly-formatted xml
             // doc.
             this.encodedName =
-                XmlaUtil.ElementNameEncoder.INSTANCE.encode(name);
-            this.xsdType = sqlToXsdType(type, scale);
+                    XmlaUtil.ElementNameEncoder.INSTANCE.encode(name);
         }
     }
 
@@ -1975,6 +1993,10 @@ public class XmlaHandler {
                 writer.endElement(); // xsd:complexType
             }
             writer.endElement(); // xsd:schema
+        }
+
+        public void setColumnName(int index, String name) {
+            this.columns.get(index).setName(name);
         }
     }
 

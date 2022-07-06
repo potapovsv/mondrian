@@ -61,6 +61,11 @@ Revision is $Id$
                 This schema's parameter definitions.
             </Doc>
         </Array>
+        <Array name="views" type="View">
+            <Doc>
+                Views described at schema level.
+            </Doc>
+        </Array>
         <Array name="dimensions" type="Dimension">
             <Doc>
                 Shared dimensions in this schema.
@@ -1393,6 +1398,11 @@ Revision is $Id$
                 }
             }
             </Code>
+    </Element>
+
+    <Element type="SchemaView" class="RelationOrJoin">
+        <Doc>A view described at schema level.</Doc>
+        <Attribute name="name" required="true"/>
     </Element>
 
     <Element type="SQL">

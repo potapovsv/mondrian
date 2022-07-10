@@ -253,7 +253,7 @@ public class RolapCube extends CubeBase {
             xmlCube.caption,
             xmlCube.description,
             xmlCube.cache,
-            xmlCube.fact,
+            (MondrianDef.Relation)RolapUtil.processRelation(xmlSchema, xmlCube.fact),
             xmlCube.dimensions,
             load,
             RolapHierarchy.createAnnotationMap(xmlCube.annotations));

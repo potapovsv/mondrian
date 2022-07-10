@@ -801,6 +801,30 @@ public class RolapUtil {
         return needsGroupBy;
     }
 
+    public static MondrianDef.RelationOrJoin processRelation(MondrianDef.Schema xmlSchema, MondrianDef.RelationOrJoin relation)
+    {
+        if (relation instanceof MondrianDef.SchemaView) {
+            final MondrianDef.SchemaView schemaView = (MondrianDef.SchemaView)relation;
+            for(MondrianDef.View view: xmlSchema.views) {
+                if(view.alias.equals(schemaView.source)) {
+                    MondrianDef.View newView = null;
+                    try {
+                        newView = (MondrianDef.View) view.deepCopy();
+                        newView.alias = schemaView.alias;
+                    }
+                    finally {
+                        return newView;
+                    }
+
+                }
+            }
+            return null;
+        }
+        else {
+            return relation;
+        }
+    }
+
 }
 
 // End RolapUtil.java

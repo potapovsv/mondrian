@@ -202,7 +202,10 @@ public class RolapHierarchy extends HierarchyBase {
         assert !(this instanceof RolapCubeHierarchy);
 
         this.xmlHierarchy = xmlHierarchy;
-        MondrianDef.RelationOrJoin xmlHierarchyRelation = xmlHierarchy.relation;
+        MondrianDef.RelationOrJoin xmlHierarchyRelation =
+                RolapUtil.processRelation(
+                        ((RolapSchema)dimension.getSchema()).getXMLSchema(),
+                        xmlHierarchy.relation);
         if (xmlHierarchy.relation == null
             && xmlHierarchy.memberReaderClass == null
             && cube != null)

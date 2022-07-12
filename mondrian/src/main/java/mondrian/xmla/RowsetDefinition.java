@@ -4393,8 +4393,10 @@ TODO: see above
                     dimensionNameCond,
                     dimensionUnameCond))
             {
-                populateDimension(
-                    connection, catalog, cube, dimension, rows);
+                if(dimension.isVisible()) {
+                    populateDimension(
+                            connection, catalog, cube, dimension, rows);
+                }
             }
         }
 
@@ -5183,7 +5185,7 @@ TODO: see above
                 // Must increment ordinal for all dimensions but
                 // only output some of them.
                 boolean genOutput = dimensionUnameCond.apply(dimension);
-                if (genOutput) {
+                if (genOutput && dimension.isVisible()) {
                     populateDimension(
                         connection, catalog, cube, dimension, ordinal, rows);
                 }
@@ -5593,8 +5595,10 @@ TODO: see above
             for (Dimension dimension
                 : filter(cube.getDimensions(), dimensionUnameCond))
             {
-                populateDimension(
-                    connection, catalog, cube, dimension, rows);
+                if(dimension.isVisible()) {
+                    populateDimension(
+                            connection, catalog, cube, dimension, rows);
+                }
             }
         }
 

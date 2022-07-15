@@ -349,12 +349,11 @@ public class FileRepository implements Repository {
         String databaseName,
         String catalogName)
     {
-        final RolapSchema schema = connection.getSchema();
-//        final RolapSchema schema =
-//            getServerInfo()
-//                .datasourceMap.get(databaseName)
-//                    .catalogMap.get(catalogName)
-//                        .getRolapSchema();
+        final RolapSchema schema =
+            getServerInfo()
+                .datasourceMap.get(databaseName)
+                    .catalogMap.get(catalogName)
+                        .getRolapSchema();
         return Collections.singletonMap(
             schema.getName(),
             schema);

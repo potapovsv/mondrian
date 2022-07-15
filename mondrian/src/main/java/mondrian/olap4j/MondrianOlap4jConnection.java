@@ -94,8 +94,8 @@ public abstract class MondrianOlap4jConnection implements OlapConnection {
      * catalog. It is possible for a schema to be mapped more than once, with
      * different names; the same RolapSchema object will be used.
      */
-    final Map<mondrian.olap.Schema, MondrianOlap4jSchema> schemaMap =
-        new HashMap<mondrian.olap.Schema, MondrianOlap4jSchema>();
+    final Map<SchemaContentKey, MondrianOlap4jSchema> schemaMap =
+        new HashMap<SchemaContentKey, MondrianOlap4jSchema>();
 
     private final MondrianOlap4jDatabaseMetaData olap4jDatabaseMetaData;
 
@@ -544,7 +544,7 @@ public abstract class MondrianOlap4jConnection implements OlapConnection {
     synchronized MondrianOlap4jSchema toOlap4j(
         mondrian.olap.Schema schema)
     {
-        MondrianOlap4jSchema olap4jSchema = schemaMap.get(schema);
+        MondrianOlap4jSchema olap4jSchema = schemaMap.get(((RolapSchema)schema).getKey().getKey());
         if (olap4jSchema == null) {
             throw new RuntimeException("schema not registered: " + schema);
         }

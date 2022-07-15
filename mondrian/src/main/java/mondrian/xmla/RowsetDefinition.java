@@ -15,6 +15,7 @@ package mondrian.xmla;
 
 import mondrian.olap.*;
 import mondrian.rolap.RolapHierarchy;
+import mondrian.rolap.RolapSchema;
 import mondrian.server.FileRepository;
 import mondrian.util.Composite;
 
@@ -2438,23 +2439,38 @@ public enum RowsetDefinition {
                 }
             }
             else if(objectType != null && objectType.equals("Schema")) {
-                for (Catalog catalog
-                        : catIter(connection, catalogNameCond)) {
-                    String catalogStr;
-                    try {
-                        final String catalogUrl = ((mondrian.olap4j.MondrianOlap4jConnection)connection)
-                                .getMondrianConnection().getCatalogName();
-                        catalogStr = Util.readVirtualFileAsString(catalogUrl);
-                    } catch (OlapException e) {
-                        throw new RuntimeException(e);
+                try {
+                    mondrian.rolap.RolapConnection rolapConnection =
+                            ((mondrian.olap4j.MondrianOlap4jConnection) connection)
+                                    .getMondrianConnection();
+                    MondrianServer mondrianServer = MondrianServer.forConnection(rolapConnection);
+
+                    mondrian.server.Repository repository = mondrianServer.getRepository();
+
+                    for (Catalog catalog
+                            : catIter(connection, catalogNameCond)) {
+
+                        Map<String, RolapSchema> schemas = repository.getRolapSchemas(
+                                rolapConnection,
+                                catalog.getDatabase().getName(),
+                                catalog.getName()
+                        );
+
+                        String catalogStr = null;
+                        if(schemas != null && schemas.size() > 0) {
+                            String catalogUrl = schemas.get(catalog.getName()).getInternalConnection().getCatalogName();
+                            catalogStr = Util.readVirtualFileAsString(catalogUrl);
+                        }
+
+                        Row row = new Row();
+                        row.set(METADATA.name, catalogStr);
+                        addRow(row, rows);
+                        break;
                     }
-                    catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Row row = new Row();
-                    row.set(METADATA.name, catalogStr);
-                    addRow(row, rows);
-                    break;
+                } catch (OlapException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }

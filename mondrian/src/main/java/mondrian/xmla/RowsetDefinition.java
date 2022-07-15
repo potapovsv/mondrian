@@ -2458,7 +2458,7 @@ public enum RowsetDefinition {
 
                         String catalogStr = null;
                         if(schemas != null && schemas.size() > 0) {
-                            String catalogUrl = schemas.get(catalog.getName()).getInternalConnection().getCatalogName();
+                            String catalogUrl = schemas.entrySet().iterator().next().getValue().getInternalConnection().getCatalogName();
                             catalogStr = Util.readVirtualFileAsString(catalogUrl);
                         }
 

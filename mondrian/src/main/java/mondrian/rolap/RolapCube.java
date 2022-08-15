@@ -662,9 +662,13 @@ public class RolapCube extends CubeBase {
 
         this.cubeUsages = new RolapCubeUsages(xmlVirtualCube.cubeUsage);
 
+        HashMap<String, MondrianDef.VirtualCubeMeasure> measureHash = new HashMap<String, MondrianDef.VirtualCubeMeasure>();
+
         for (MondrianDef.VirtualCubeMeasure xmlMeasure
             : xmlVirtualCube.measures)
         {
+            measureHash.put(xmlMeasure.name, xmlMeasure);
+
             // Lookup a measure in an existing cube.
             RolapCube cube = schema.lookupCube(xmlMeasure.cubeName);
             if (cube == null) {
@@ -895,6 +899,17 @@ public class RolapCube extends CubeBase {
                 ((RolapHierarchy.RolapCalculatedMeasure) calcMeasure)
                         .setBaseCube(calcMeasuresWithBaseCube.get(calcMeasure.getUniqueName()).getBaseCube());
             }
+
+            MondrianDef.VirtualCubeMeasure xmlMeasure = measureHash.get(calcMeasure.getUniqueName());
+            if(xmlMeasure != null) {
+                Boolean visible = xmlMeasure.visible;
+                if(visible != null) {
+                    calcMeasure.setProperty(
+                            Property.VISIBLE.name,
+                            visible);
+                }
+            }
+
             finalMeasureMembers.add(calcMeasure);
         }
         setMeasuresHierarchyMemberReader(

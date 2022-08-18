@@ -1072,7 +1072,8 @@ public class Util extends XOMUtil {
 
         Role role = schemaReader.getRole();
         if (!role.canAccess(olapElement)) {
-            olapElement = null;
+            throw MondrianResource.instance().MdxChildObjectNotFound.ex(
+                    fullName, cube.getQualifiedName());
         }
         if (olapElement instanceof Member) {
             olapElement =

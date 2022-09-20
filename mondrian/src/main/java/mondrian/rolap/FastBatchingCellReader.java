@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2004-2005 Julian Hyde
 // Copyright (C) 2005-2020 Hitachi Vantara and others
+// Copyright (C) 2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -83,6 +84,8 @@ public class FastBatchingCellReader implements CellReader {
     private final List<CellRequest> cellRequests = new ArrayList<CellRequest>();
 
     private final Execution execution;
+
+    public HashMap<List<List<Member>>, CompoundPredicateInfo> aggregationListHash = new HashMap<>();
 
     /**
      * Creates a FastBatchingCellReader.

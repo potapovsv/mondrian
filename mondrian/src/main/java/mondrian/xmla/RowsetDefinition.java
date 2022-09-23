@@ -1137,6 +1137,9 @@ public enum RowsetDefinition {
             MdschemaPropertiesRowset.DataType,
             MdschemaPropertiesRowset.PropertyContentType,
             MdschemaPropertiesRowset.Description,
+            MdschemaPropertiesRowset.PropertyOrigin,
+            MdschemaPropertiesRowset.CubeSource,
+            MdschemaPropertiesRowset.PropertyVisibility,
         },
             null /* not sorted */)
     {
@@ -7307,6 +7310,39 @@ TODO: see above
                 12,
                 Column.OPTIONAL,
                 "A human-readable description of the measure.");
+        private static final Column PropertyOrigin =
+            new Column(
+                "PROPERTY_ORIGIN",
+                Type.UnsignedShort,
+                null,
+                Column.RESTRICTION,
+                14,
+                Column.OPTIONAL,
+                "A default restriction is in place on MD_USER_DEFINED OR MD_SYSTEM_ENABLED.");
+        private static final Column CubeSource =
+            new Column(
+                "CUBE_SOURCE",
+                Type.UnsignedShort,
+                null,
+                Column.RESTRICTION,
+                15,
+                Column.OPTIONAL,
+                "A bitmap with one of the following valid values:\n" +
+                        "1 CUBE\n" +
+                        "2 DIMENSION\n" +
+                        "Default restriction is a value of 1.");
+        private static final Column PropertyVisibility =
+            new Column(
+                "PROPERTY_VISIBILITY",
+                Type.UnsignedShort,
+                null,
+                Column.RESTRICTION,
+                16,
+                Column.OPTIONAL,
+                "A bitmap with one of the following valid values:\n" +
+                        "1 Visible\n" +
+                        "2 Not visible\n" +
+                        "Default restriction is a value of 1.");
 
         protected boolean needConnection() {
             return false;
@@ -7512,6 +7548,10 @@ TODO: see above
                 + level.getName() + " Level - "
                 + property.getName() + " Property";
             row.set(Description.name, desc);
+
+            row.set(CubeSource.name, 2);
+
+            row.set(PropertyVisibility.name, 1);
 
             addRow(row, rows);
         }

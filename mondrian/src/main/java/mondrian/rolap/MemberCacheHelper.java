@@ -57,6 +57,8 @@ public class MemberCacheHelper implements MemberCache {
     final SmartMemberListCache<RolapLevel, List<RolapMember>>
         mapLevelToMembers;
 
+    final ArrayList<RolapLevel> cachedLevels = new ArrayList<>();
+
     /**
      * Creates a MemberCacheHelper.
      *
@@ -234,12 +236,19 @@ public class MemberCacheHelper implements MemberCache {
         return mapLevelToMembers.get(level, constraint);
     }
 
+    public void setLevelAsCached(RolapLevel rolapLevel) {
+        if(this.cachedLevels.contains(rolapLevel)) {
+            this.cachedLevels.add(rolapLevel);
+        }
+    }
+
     // Must sync here because we want the three maps to be modified together.
     public synchronized void flushCache() {
         mapMemberToChildren.clear();
         mapKeyToMember.clear();
         mapLevelToMembers.clear();
         mapParentToNamedChildren.clear();
+        cachedLevels.clear();
 
         // We also need (why?) to clear the approxRowCount of each level.
         // But it leads to losing of approxRowCount value from schema

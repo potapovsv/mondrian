@@ -518,9 +518,13 @@ public abstract class DefaultXmlaServlet extends XmlaServlet {
             String username = (String) context.get(CONTEXT_XMLA_USERNAME);
             String password = (String) context.get(CONTEXT_XMLA_PASSWORD);
             String sessionId = (String) context.get(CONTEXT_XMLA_SESSION_ID);
-            XmlaRequest xmlaReq =
+            DefaultXmlaRequest xmlaReq =
                 new DefaultXmlaRequest(
                     xmlaReqElem, roleName, username, password, sessionId);
+            String authenticatedUser = (String) context.get(CONTEXT_XMLA_AUTHENTICATED_USER);
+            xmlaReq.setAuthenticatedUser(authenticatedUser);
+            String[] getAuthenticatedUserGroups = (String[])context.get(CONTEXT_XMLA_AUTHENTICATED_USER_GROUPS);
+            xmlaReq.setAuthenticatedUserGroups(getAuthenticatedUserGroups);
 
             // "ResponseMimeType" may be in the context if the "Accept" HTTP
             // header was specified. But override if the SOAP request has the

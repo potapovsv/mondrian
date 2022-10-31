@@ -4,7 +4,7 @@
  * http://www.eclipse.org/legal/epl-v10.html.
  * You must accept the terms of that agreement to use this software.
  *
- * Copyright (c) 2021 Sergei Semenkov.
+ * Copyright (c) 2021-2022 Sergei Semenkov.
  * All rights reserved.
  */
 
@@ -65,4 +65,12 @@ public class DmvXmlaRequest
     public String getPassword() { return this.password; }
 
     public String getSessionId() { return this.sessionId; }
+
+    public String getAuthenticatedUser() {
+        return null;
+    }
+
+    public String[] getAuthenticatedUserGroups() {
+        return null;
+    }
 }

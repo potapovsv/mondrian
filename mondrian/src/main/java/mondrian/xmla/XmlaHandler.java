@@ -16,6 +16,7 @@ package mondrian.xmla;
 import mondrian.olap.MondrianProperties;
 import mondrian.olap.Util;
 import mondrian.olap4j.IMondrianOlap4jProperty;
+import mondrian.olap4j.MondrianOlap4jConnection;
 import mondrian.rolap.SqlStatement;
 import mondrian.server.FileRepository;
 import mondrian.util.CompositeList;
@@ -32,6 +33,7 @@ import mondrian.olap.Refresh;
 import mondrian.olap.Update;
 import mondrian.olap.TransactionCommand;
 import mondrian.olap.DmvQuery;
+import mondrian.olap.MondrianDef;
 
 import mondrian.server.Session;
 
@@ -61,6 +63,7 @@ import static org.olap4j.metadata.XmlaConstants.*;
 
 import mondrian.rolap.RolapDrillThroughAction;
 import mondrian.rolap.RolapDrillThroughColumn;
+import mondrian.rolap.RolapSchema;
 
 import mondrian.server.Locus;
 
@@ -205,6 +208,44 @@ public class XmlaHandler {
                 catalogName,
                 request.getRoleName(),
                 props );
+
+        ArrayList<String> authenticatedUserAndGroups = new ArrayList<String>();
+        if(request.getAuthenticatedUser() != null) {
+            authenticatedUserAndGroups.add(request.getAuthenticatedUser());
+        }
+        if(request.getAuthenticatedUserGroups() != null) {
+            authenticatedUserAndGroups.addAll(Arrays.asList(request.getAuthenticatedUserGroups()));
+        }
+        if(authenticatedUserAndGroups.size() > 0) {
+            ArrayList<String> roles = new ArrayList<String>();
+
+            RolapSchema rolapSchema = ((MondrianOlap4jConnection)connection).getMondrianConnection().getSchema();
+            MondrianDef.Schema xmlSchema = rolapSchema.getXMLSchema();
+
+            for(MondrianDef.Role role: xmlSchema.roles) {
+                for(MondrianDef.RoleMember roleMember: role.members) {
+                    boolean inRole = false;
+                    if( roleMember.name != null) {
+                        String roleMemberName = roleMember.name.trim().toLowerCase(Locale.ROOT);
+                        for (String aRole : authenticatedUserAndGroups) {
+                            if (roleMemberName.equals(aRole.toLowerCase(Locale.ROOT))){
+                                roles.add(role.name);
+                                inRole = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(inRole) {
+                        break;
+                    }
+                }
+            }
+            if(roles.size() > 0) {
+                ((MondrianOlap4jConnection) connection).setRoleNames(roles);
+            }
+
+
+        }
         String localeIdentifier = request.getProperties().get("LocaleIdentifier");
         Locale locale = XmlaUtil.convertToLocale( localeIdentifier );
         if (locale != null) {

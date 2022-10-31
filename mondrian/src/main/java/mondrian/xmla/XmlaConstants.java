@@ -84,6 +84,10 @@ public interface XmlaConstants {
     public static final String CONTEXT_XMLA_USERNAME = "username";
     public static final String CONTEXT_XMLA_PASSWORD = "password";
 
+    // Authenticated User and Groups
+    public static final String CONTEXT_XMLA_AUTHENTICATED_USER = "AuthenticatedUser";
+    public static final String CONTEXT_XMLA_AUTHENTICATED_USER_GROUPS = "AuthenticatedUserGroups";
+
     // context key for session state storage
     public static final String CONTEXT_XMLA_SESSION_STATE = "SessionState";
     public static final String CONTEXT_XMLA_SESSION_STATE_BEGIN =

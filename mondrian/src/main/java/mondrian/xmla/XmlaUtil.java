@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2003-2005 Julian Hyde
 // Copyright (C) 2005-2017 Hitachi Vantara
+// Copyright (C) 2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.xmla;
@@ -367,6 +368,14 @@ way too noisy
             }
 
             public String getSessionId() {
+                return null;
+            }
+
+            public String getAuthenticatedUser() {
+                return null;
+            }
+
+            public String[] getAuthenticatedUserGroups() {
                 return null;
             }
         };

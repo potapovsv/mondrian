@@ -573,6 +573,23 @@ public class DefaultXmlaRequest
         newProperties.put(key, value);
         this.properties = Collections.unmodifiableMap(newProperties);
     }
+
+    private String authenticatedUser = null;
+    public void setAuthenticatedUser(String authenticatedUser) {
+        this.authenticatedUser = authenticatedUser;
+    }
+    public String getAuthenticatedUser() {
+        return this.authenticatedUser;
+    }
+
+    private String[] authenticatedUserGroups = null;
+    public void setAuthenticatedUserGroups(String[] authenticatedUserGroups) {
+        this.authenticatedUserGroups = authenticatedUserGroups;
+    }
+    public String[] getAuthenticatedUserGroups() {
+        return this.authenticatedUserGroups;
+    }
+
 }
 
 // End DefaultXmlaRequest.java

@@ -7789,6 +7789,14 @@ TODO: see above
         public String getSessionId() {
             return request.getSessionId();
         }
+
+        public String getAuthenticatedUser() {
+            return request.getAuthenticatedUser();
+        }
+
+        public String[] getAuthenticatedUserGroups() {
+            return request.getAuthenticatedUserGroups();
+        }
     }
 
     /**

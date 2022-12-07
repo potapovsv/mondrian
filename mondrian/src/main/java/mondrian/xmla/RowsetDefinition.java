@@ -14,6 +14,7 @@
 package mondrian.xmla;
 
 import mondrian.olap.*;
+import mondrian.olap4j.MondrianOlap4jMember;
 import mondrian.rolap.RolapHierarchy;
 import mondrian.rolap.RolapSchema;
 import mondrian.server.FileRepository;
@@ -6038,6 +6039,14 @@ TODO: see above
                 visible = true;
             }
             if (!visible && !XmlaUtil.shouldEmitInvisibleMembers(request)) {
+                return;
+            }
+
+            mondrian.rolap.RolapConnection rolapConnection =
+                    ((mondrian.olap4j.MondrianOlap4jConnection) connection)
+                            .getMondrianConnection();
+
+            if(!rolapConnection.getRole().canAccess(((MondrianOlap4jMember)member).getOlapElement())) {
                 return;
             }
 

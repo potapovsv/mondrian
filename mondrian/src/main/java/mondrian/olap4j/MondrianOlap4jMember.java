@@ -6,6 +6,7 @@
 *
 * Copyright (c) 2002-2017 Hitachi Vantara.
 * Copyright (C) 2021 Topsoft
+* Copyright (C) 2022 Sergei Semenkov
 * All rights reserved.
 */
 
@@ -256,7 +257,7 @@ public class MondrianOlap4jMember
             mondrian.olap.Property.VISIBLE.getName());
     }
 
-    protected OlapElement getOlapElement() {
+    public OlapElement getOlapElement() {
         return member;
     }
 

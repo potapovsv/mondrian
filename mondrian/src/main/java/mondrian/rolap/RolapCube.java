@@ -365,7 +365,12 @@ public class RolapCube extends CubeBase {
                         else {
                             if(drillThroughAttribute.hierarchy != null && !drillThroughAttribute.hierarchy.equals("")) {
                                 for(Hierarchy currentHierarchy: dimension.getHierarchies()) {
-                                    if(currentHierarchy.getName().equals(drillThroughAttribute.hierarchy)) {
+                                    //Behavior differs for defferent mondrian.olap.SsasCompatibleNaming values
+                                    String herarchyName = ((RolapCubeHierarchy) currentHierarchy).getSubName();
+                                    if(herarchyName == null) {
+                                        herarchyName = currentHierarchy.getName();
+                                    }
+                                    if(herarchyName.equals(drillThroughAttribute.hierarchy)) {
                                         hierarchy = currentHierarchy;
                                         break;
                                     }

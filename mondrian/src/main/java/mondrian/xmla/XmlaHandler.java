@@ -7,7 +7,7 @@
 // Copyright (C) 2003-2005 Julian Hyde
 // Copyright (C) 2005-2018 Hitachi Vantara
 // Copyright (C) 2019 Topsoft
-// Copyright (C) 2020-2022 Sergei Semenkov
+// Copyright (C) 2020-2023 Sergei Semenkov
 
 // All Rights Reserved.
 */
@@ -1956,6 +1956,10 @@ public class XmlaHandler {
                         if (value == null) {
                             writer.characters("null");
                         } else {
+                            // Excel crashes if there are more than 4 digits after point in BigDecimal
+                            if(value instanceof java.math.BigDecimal) {
+                                value = ((java.math.BigDecimal)value).setScale(4, java.math.RoundingMode.HALF_EVEN);
+                            }
                             String valueString = value.toString();
                             if (value instanceof Number) {
                                 valueString =

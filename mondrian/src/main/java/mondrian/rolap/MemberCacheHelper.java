@@ -8,6 +8,7 @@
 // Copyright (C) 2004-2005 TONBELLER AG
 // Copyright (C) 2005-2017 Hitachi Vantara and others
 // Copyright (C) 2022 Sergei Semenkov
+// Copyright (C) 2023 Riccardo Gusmeroli
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -237,7 +238,7 @@ public class MemberCacheHelper implements MemberCache {
     }
 
     public void setLevelAsCached(RolapLevel rolapLevel) {
-        if(this.cachedLevels.contains(rolapLevel)) {
+        if(!this.cachedLevels.contains(rolapLevel)) {
             this.cachedLevels.add(rolapLevel);
         }
     }

@@ -8,6 +8,7 @@
 // Copyright (C) 2005-2018 Hitachi Vantara
 // Copyright (C) 2019 Topsoft
 // Copyright (C) 2020-2023 Sergei Semenkov
+// Copyright (C) 2023 Riccardo Gusmeroli
 
 // All Rights Reserved.
 */
@@ -2730,13 +2731,13 @@ public class XmlaHandler {
                 "name", axisName);
             writer.startSequence("Tuples", "Tuple");
 
-            HashMap<Level, ArrayList<mondrian.olap.Member>> levelMembers = new HashMap<>();
+            HashMap<Level, HashSet<mondrian.olap.Member>> levelMembers = new HashMap<>();
 
             for (Position p : axis.getPositions()) {
                 for (Member member : p.getMembers()) {
                     Level level = member.getLevel();
                     if(!levelMembers.containsKey(level)){
-                        levelMembers.put(level, new ArrayList<mondrian.olap.Member>());
+                        levelMembers.put(level, new HashSet<mondrian.olap.Member>());
                     }
                     levelMembers.get(level)
                             .add(((mondrian.olap4j.MondrianOlap4jMember)member).getOlapMember());
@@ -2748,9 +2749,9 @@ public class XmlaHandler {
             final mondrian.server.Statement statement =
                     (mondrian.server.Statement) cellSet.getStatement();
 
-            for(Map.Entry<Level, ArrayList<mondrian.olap.Member>> entry : levelMembers.entrySet()) {
+            for(Map.Entry<Level, HashSet<mondrian.olap.Member>> entry : levelMembers.entrySet()) {
                 Level level = entry.getKey();
-                ArrayList<mondrian.olap.Member> members = entry.getValue();
+                ArrayList<mondrian.olap.Member> members = new ArrayList<>( entry.getValue() );
 
                 if (members.size() > 0
                         && members.get(0).getLevel().getChildLevel() != null

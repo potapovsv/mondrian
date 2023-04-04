@@ -7,6 +7,7 @@
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2021 Hitachi Vantara and others
 // Copyright (C) 2021-2022 Sergei Semenkov
+// Copyright (C) 2023 Riccardo Gusmeroli
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -291,8 +292,8 @@ public class RolapResult extends ResultBase {
                     if(subcubeHierarchyMembers.containsKey(expandingMember)) {
                       for(Map.Entry<Member, Member> memberEntry : subcubeHierarchyMembers.entrySet()) {
                         Member childMember = memberEntry.getValue();
-                        if(childMember.getParentUniqueName() != null &&
-                                childMember.getParentUniqueName().equals(expandingMember.getUniqueName())) {
+                        if(childMember.getParentMember() != null &&
+                                childMember.getParentMember().getUniqueName().equals(expandingMember.getUniqueName())) {
                           children.add(childMember);
                         }
                       }

@@ -1574,4 +1574,16 @@ log4j.configuration=file:log4j.properties</code></blockquote>
         <Type>boolean</Type>
         <Default>false</Default>
     </PropertyDefinition>
+    <PropertyDefinition>
+        <Name>AddAxisNonEmpty</Name>
+        <Path>mondrian.rolap.AddAxisNonEmpty</Path>
+        <Description>
+            <p>
+                Add NonEmpty function around axis set if axis has non empty.
+                Default value is false.
+            </p>
+        </Description>
+        <Type>boolean</Type>
+        <Default>false</Default>
+    </PropertyDefinition>
 </PropertyDefinitions>

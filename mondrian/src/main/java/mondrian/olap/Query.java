@@ -6,7 +6,7 @@
 //
 // Copyright (C) 1998-2005 Julian Hyde
 // Copyright (C) 2005-2021 Hitachi Vantara and others
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2023 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.olap;
@@ -662,7 +662,29 @@ public class Query extends QueryPart {
         if (axes != null) {
             axisCalcs = new Calc[axes.length];
             for (int i = 0; i < axes.length; i++) {
+                Exp prevSet = axes[i].getSet();
+                if(axes[i].isNonEmpty()) {
+                    ArrayList<Exp> memberExps = new ArrayList<Exp>();
+                    for(Member member: this.measuresMembers) {
+                        memberExps.add(new MemberExpr(member));
+                    }
+                    Exp[] nonEmptyArgs;
+                    if(memberExps.size() > 0) {
+                        Exp set2Exp = new UnresolvedFunCall(
+                                "{}", Syntax.Braces, memberExps.toArray(new Exp[memberExps.size()]));
+                        nonEmptyArgs = new Exp[]{prevSet, set2Exp};
+                    }
+                    else {
+                        nonEmptyArgs = new Exp[]{prevSet};
+                    }
+                    axes[i].setSet(new mondrian.mdx.UnresolvedFunCall(
+                            "NonEmpty",
+                            mondrian.olap.Syntax.Function,
+                            nonEmptyArgs
+                    ).accept(compiler.getValidator()));
+                }
                 axisCalcs[i] = axes[i].compile(compiler, resultStyle);
+                axes[i].setSet(prevSet);
             }
         }
         if (slicerAxis != null) {

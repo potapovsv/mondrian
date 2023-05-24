@@ -62,13 +62,6 @@ public class QueryAxis extends QueryPart {
         this.nonEmpty = nonEmpty
             || (MondrianProperties.instance().EnableNonEmptyOnAllAxis.get()
             && !axisOrdinal.isFilter());
-        if(MondrianProperties.instance().AddAxisNonEmpty.get() && nonEmpty) {
-            set = new mondrian.mdx.UnresolvedFunCall(
-                    "NonEmpty",
-                    mondrian.olap.Syntax.Function,
-                    new Exp[]{set}
-            );
-        }
         this.exp = set;
         this.axisOrdinal = axisOrdinal;
         this.subtotalVisibility = subtotalVisibility;

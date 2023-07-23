@@ -6,7 +6,7 @@
 //
 // Copyright (C) 2005-2005 Julian Hyde
 // Copyright (C) 2005-2017 Hitachi Vantara
-// Copyright (C) 2021-2022 Sergei Semenkov
+// Copyright (C) 2021-2023 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.olap.type;
@@ -338,28 +338,55 @@ public class TypeUtil {
                 return false;
             }
         case Category.Member:
-            switch (to) {
-            case Category.Dimension:
-            case Category.Hierarchy:
-            case Category.Level:
-            case Category.Tuple:
-                conversions.add(new ConversionImpl(from, to, ordinal, 1, null));
-                return true;
-            case Category.Set:
-                conversions.add(new ConversionImpl(from, to, ordinal, 2, null));
-                return true;
-            case Category.Numeric:
-                conversions.add(new ConversionImpl(from, to, ordinal, 3, null));
-                return true;
-            case Category.Value:
-            case Category.String:
-                // We assume that measures are numeric, so a cast to a string or
-                // general value expression is more expensive (cost=4) than a
-                // conversion to a numeric expression (cost=3).
-                conversions.add(new ConversionImpl(from, to, ordinal, 4, null));
-                return true;
-            default:
-                return false;
+            if(fromType.getDimension().isMeasures()) {
+                switch (to) {
+                    case Category.Numeric:
+                        conversions.add(new ConversionImpl(from, to, ordinal, 1, null));
+                        return true;
+                    case Category.Value:
+                    case Category.String:
+                        // We assume that measures are numeric, so a cast to a string or
+                        // general value expression is more expensive (cost=4) than a
+                        // conversion to a numeric expression (cost=3).
+                        conversions.add(new ConversionImpl(from, to, ordinal, 2, null));
+                        return true;
+                    case Category.Dimension:
+                    case Category.Hierarchy:
+                    case Category.Level:
+                    case Category.Tuple:
+                        conversions.add(new ConversionImpl(from, to, ordinal, 3, null));
+                        return true;
+                    case Category.Set:
+                        conversions.add(new ConversionImpl(from, to, ordinal, 4, null));
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            else {
+                switch (to) {
+                    case Category.Dimension:
+                    case Category.Hierarchy:
+                    case Category.Level:
+                    case Category.Tuple:
+                        conversions.add(new ConversionImpl(from, to, ordinal, 1, null));
+                        return true;
+                    case Category.Set:
+                        conversions.add(new ConversionImpl(from, to, ordinal, 2, null));
+                        return true;
+                    case Category.Numeric:
+                        conversions.add(new ConversionImpl(from, to, ordinal, 3, null));
+                        return true;
+                    case Category.Value:
+                    case Category.String:
+                        // We assume that measures are numeric, so a cast to a string or
+                        // general value expression is more expensive (cost=4) than a
+                        // conversion to a numeric expression (cost=3).
+                        conversions.add(new ConversionImpl(from, to, ordinal, 4, null));
+                        return true;
+                    default:
+                        return false;
+                }
             }
         case Category.Numeric | Category.Constant:
             switch (to) {

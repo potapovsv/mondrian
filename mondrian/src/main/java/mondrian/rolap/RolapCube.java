@@ -116,6 +116,115 @@ public class RolapCube extends CubeBase {
      */
     private List<RolapCube> baseCubes;
 
+    private void addActions(MondrianDef.Action[] actions) {
+        for(MondrianDef.Action action: actions) {
+            if(action instanceof MondrianDef.DrillThroughAction) {
+                MondrianDef.DrillThroughAction drillThroughAction = (MondrianDef.DrillThroughAction)action;
+
+                List<RolapDrillThroughColumn> columns = new ArrayList<RolapDrillThroughColumn>();
+
+                for(MondrianDef.DrillThroughColumn drillThroughColumn: drillThroughAction.columns) {
+                    if(drillThroughColumn instanceof MondrianDef.DrillThroughAttribute) {
+                        MondrianDef.DrillThroughAttribute drillThroughAttribute =
+                                (MondrianDef.DrillThroughAttribute)drillThroughColumn;
+
+                        String attributeName = drillThroughAttribute.name;
+                        Dimension dimension = null;
+                        Hierarchy hierarchy = null;
+                        Level level = null;
+                        for(Dimension currntDimension: this.getDimensions()) {
+                            if(currntDimension.getName().equals(drillThroughAttribute.dimension)) {
+                                dimension = currntDimension;
+                                break;
+                            }
+                        }
+                        if(dimension == null) {
+                            throw Util.newError(
+                                    "Error while creating DrillThrough  action. Dimension '"
+                                            + drillThroughAttribute.dimension + "' not found");
+                        }
+                        else {
+                            if(drillThroughAttribute.hierarchy != null && !drillThroughAttribute.hierarchy.equals("")) {
+                                for(Hierarchy currentHierarchy: dimension.getHierarchies()) {
+                                    //Behavior differs for defferent mondrian.olap.SsasCompatibleNaming values
+                                    String herarchyName = ((RolapCubeHierarchy) currentHierarchy).getSubName();
+                                    if(herarchyName == null) {
+                                        herarchyName = currentHierarchy.getName();
+                                    }
+                                    if(herarchyName.equals(drillThroughAttribute.hierarchy)) {
+                                        hierarchy = currentHierarchy;
+                                        break;
+                                    }
+                                }
+                                if(hierarchy == null) {
+                                    throw Util.newError(
+                                            "Error while creating DrillThrough  action. Hierarchy '"
+                                                    + drillThroughAttribute.hierarchy + "' not found");
+                                }
+                                else {
+                                    if(drillThroughAttribute.level != null && !drillThroughAttribute.level.equals("")) {
+                                        for(Level currentLevel: hierarchy.getLevels()) {
+                                            if(currentLevel.getName().equals(drillThroughAttribute.level)) {
+                                                level = currentLevel;
+                                                break;
+                                            }
+                                        }
+                                        if(level == null) {
+                                            throw Util.newError(
+                                                    "Error while creating DrillThrough  action. Level '"
+                                                            + drillThroughAttribute.level + "' not found");
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+
+                        columns.add(
+                                new RolapDrillThroughAttribute(
+                                        attributeName,
+                                        dimension,
+                                        hierarchy,
+                                        level
+                                )
+                        );
+
+                    }
+                    else if(drillThroughColumn instanceof MondrianDef.DrillThroughMeasure) {
+                        MondrianDef.DrillThroughMeasure drillThroughMeasure =
+                                (MondrianDef.DrillThroughMeasure)drillThroughColumn;
+
+                        String measureName = drillThroughMeasure.name;
+                        Member measure = null;
+                        for(Member currntMeasure: this.getMeasures()) {
+                            if(currntMeasure.getName().equals(drillThroughMeasure.measure)) {
+                                measure = currntMeasure;
+                                break;
+                            }
+                        }
+                        if(measure == null) {
+                            throw Util.newError(
+                                    "Error while creating DrillThrough  action. Measure '"
+                                            + drillThroughMeasure.name + "' not found");
+                        }
+                        columns.add(
+                                new RolapDrillThroughMeasure(measureName, measure)
+                        );
+                    }
+                }
+
+                RolapDrillThroughAction rolapDrillThroughAction = new RolapDrillThroughAction(
+                        drillThroughAction.name,
+                        drillThroughAction.caption,
+                        drillThroughAction.description,
+                        drillThroughAction._default != null && drillThroughAction._default,
+                        columns
+                );
+                this.actionList.add(rolapDrillThroughAction);
+            }
+        }
+    }
+
     /**
      * Private constructor used by both normal cubes and virtual cubes.
      *
@@ -336,112 +445,7 @@ public class RolapCube extends CubeBase {
         checkOrdinals(xmlCube.name, measureList);
         loadAggGroup(xmlCube);
 
-        for(MondrianDef.Action action: xmlCube.actions) {
-            if(action instanceof MondrianDef.DrillThroughAction) {
-                MondrianDef.DrillThroughAction drillThroughAction = (MondrianDef.DrillThroughAction)action;
-
-                List<RolapDrillThroughColumn> columns = new ArrayList<RolapDrillThroughColumn>();
-
-                for(MondrianDef.DrillThroughColumn drillThroughColumn: drillThroughAction.columns) {
-                    if(drillThroughColumn instanceof MondrianDef.DrillThroughAttribute) {
-                        MondrianDef.DrillThroughAttribute drillThroughAttribute =
-                                (MondrianDef.DrillThroughAttribute)drillThroughColumn;
-
-                        String name = drillThroughAttribute.name;
-                        Dimension dimension = null;
-                        Hierarchy hierarchy = null;
-                        Level level = null;
-                        for(Dimension currntDimension: this.getDimensions()) {
-                            if(currntDimension.getName().equals(drillThroughAttribute.dimension)) {
-                                dimension = currntDimension;
-                                break;
-                            }
-                        }
-                        if(dimension == null) {
-                            throw Util.newError(
-                                    "Error while creating DrillThrough  action. Dimension '"
-                                            + drillThroughAttribute.dimension + "' not found");
-                        }
-                        else {
-                            if(drillThroughAttribute.hierarchy != null && !drillThroughAttribute.hierarchy.equals("")) {
-                                for(Hierarchy currentHierarchy: dimension.getHierarchies()) {
-                                    //Behavior differs for defferent mondrian.olap.SsasCompatibleNaming values
-                                    String herarchyName = ((RolapCubeHierarchy) currentHierarchy).getSubName();
-                                    if(herarchyName == null) {
-                                        herarchyName = currentHierarchy.getName();
-                                    }
-                                    if(herarchyName.equals(drillThroughAttribute.hierarchy)) {
-                                        hierarchy = currentHierarchy;
-                                        break;
-                                    }
-                                }
-                                if(hierarchy == null) {
-                                    throw Util.newError(
-                                            "Error while creating DrillThrough  action. Hierarchy '"
-                                                    + drillThroughAttribute.hierarchy + "' not found");
-                                }
-                                else {
-                                    if(drillThroughAttribute.level != null && !drillThroughAttribute.level.equals("")) {
-                                        for(Level currentLevel: hierarchy.getLevels()) {
-                                            if(currentLevel.getName().equals(drillThroughAttribute.level)) {
-                                                level = currentLevel;
-                                                break;
-                                            }
-                                        }
-                                        if(level == null) {
-                                            throw Util.newError(
-                                                    "Error while creating DrillThrough  action. Level '"
-                                                            + drillThroughAttribute.level + "' not found");
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-
-                        columns.add(
-                                new RolapDrillThroughAttribute(
-                                        name,
-                                        dimension,
-                                        hierarchy,
-                                        level
-                                )
-                        );
-
-                    }
-                    else if(drillThroughColumn instanceof MondrianDef.DrillThroughMeasure) {
-                        MondrianDef.DrillThroughMeasure drillThroughMeasure =
-                                (MondrianDef.DrillThroughMeasure)drillThroughColumn;
-
-                        String name = drillThroughMeasure.name;
-                        Member measure = null;
-                        for(Member currntMeasure: this.getMeasures()) {
-                            if(currntMeasure.getName().equals(drillThroughMeasure.measure)) {
-                                measure = currntMeasure;
-                                break;
-                            }
-                        }
-                        if(measure == null) {
-                            throw Util.newError(
-                                    "Error while creating DrillThrough  action. Measure '"
-                                            + drillThroughMeasure.name + "' not found");
-                        }
-                        columns.add(
-                                new RolapDrillThroughMeasure(name, measure)
-                        );
-                    }
-                }
-
-                RolapDrillThroughAction rolapDrillThroughAction = new RolapDrillThroughAction(
-                        drillThroughAction.name,
-                        drillThroughAction.caption,
-                        drillThroughAction.description,
-                        drillThroughAction._default != null && drillThroughAction._default,
-                        columns
-                );
-                this.actionList.add(rolapDrillThroughAction);
-            }
-        }
+        this.addActions(xmlCube.actions);
 
         for(MondrianDef.WritebackTable writebackTable: xmlCube.writebacks) {
             List<RolapWritebackColumn> columns = new ArrayList<RolapWritebackColumn>();
@@ -923,6 +927,8 @@ public class RolapCube extends CubeBase {
                     this.measuresHierarchy,
                     Util.<RolapMember>cast(finalMeasureMembers))));
         // Note: virtual cubes do not get aggregate
+
+        this.addActions(xmlVirtualCube.actions);
     }
 
     private boolean vcHasAllCalcMembers(

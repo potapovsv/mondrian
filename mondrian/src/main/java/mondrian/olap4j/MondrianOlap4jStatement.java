@@ -14,6 +14,8 @@ import mondrian.calc.ResultStyle;
 import mondrian.olap.*;
 import mondrian.rolap.RolapConnection;
 import mondrian.rolap.SqlStatement;
+import mondrian.rolap.RolapVirtualCubeMeasure;
+import mondrian.rolap.RolapCell;
 import mondrian.server.*;
 import mondrian.util.Pair;
 
@@ -26,6 +28,7 @@ import java.io.StringWriter;
 import java.sql.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Implementation of {@link org.olap4j.OlapStatement}
@@ -92,21 +95,60 @@ abstract class MondrianOlap4jStatement
             query.setResultStyle(ResultStyle.LIST);
             setQuery(query);
             CellSet cellSet = executeOlapQueryInternal(query, null);
-            final List<Integer> coords = Collections.nCopies(
+            List<Integer> coords = Collections.nCopies(
                 cellSet.getAxes().size(), 0);
-            final MondrianOlap4jCell cell =
+            MondrianOlap4jCell cell =
                 (MondrianOlap4jCell) cellSet.getCell(coords);
 
             List<OlapElement> fields = drillThrough.getReturnList();
             mondrian.rolap.RolapDrillThroughAction rolapDrillThroughAction = null;
+            MondrianOlap4jCube mondrianOlap4jCube = (MondrianOlap4jCube)cellSet.getMetaData().getCube();
+            mondrian.rolap.RolapCube rolapCube = (mondrian.rolap.RolapCube)mondrianOlap4jCube.getOlapElement();
             if(fields.size() == 0) {
-                MondrianOlap4jCube mondrianOlap4jCube = (MondrianOlap4jCube)cellSet.getMetaData().getCube();
-                mondrian.rolap.RolapCube rolapCube = (mondrian.rolap.RolapCube)mondrianOlap4jCube.getOlapElement();
-
                 rolapDrillThroughAction = rolapCube.getDefaultDrillThroughAction();
                 if(rolapDrillThroughAction != null) {
                     fields = rolapDrillThroughAction.getOlapElements();
                 }
+            }
+
+            RolapVirtualCubeMeasure rolapVirtualCubeMeasure = null;
+            for(OlapElement olapElement: fields) {
+                if(rolapVirtualCubeMeasure == null && olapElement instanceof RolapVirtualCubeMeasure) {
+                    rolapVirtualCubeMeasure = (RolapVirtualCubeMeasure)olapElement;
+                }
+            }
+            if(rolapVirtualCubeMeasure != null
+                && !cell.getRolapCell().getDrillThroughBaseCube().getName()
+                        .equals(rolapVirtualCubeMeasure.getCube().getName())) {
+
+                ArrayList<Member> memberList = new ArrayList<Member>();
+                memberList.add(rolapVirtualCubeMeasure);
+                for(Member member: cell.getRolapCell().getMembersForDrillThrough()) {
+                    if(!member.isMeasure()) {
+                        memberList.add(member);
+                    }
+                }
+
+                String whereMdx = " WHERE (";
+                boolean isFirst = true;
+                for(OlapElement olapElement: memberList) {
+                    if(!isFirst) {
+                        whereMdx = whereMdx + ",";
+                    }
+                    isFirst = false;
+                    whereMdx = whereMdx + olapElement.getUniqueName();
+                }
+                whereMdx = whereMdx + ")";
+
+                String selectMdx =
+                        "SELECT FROM "
+                        + rolapCube.getUniqueName()
+                        + whereMdx;
+
+                Pair<Query, MondrianOlap4jCellSetMetaData> pair = parseQuery(selectMdx);
+                cellSet = executeOlapQueryInternal(pair.left, null);
+                coords = Collections.nCopies(cellSet.getAxes().size(), 0);
+                cell = (MondrianOlap4jCell) cellSet.getCell(coords);
             }
 
             ResultSet resultSet =

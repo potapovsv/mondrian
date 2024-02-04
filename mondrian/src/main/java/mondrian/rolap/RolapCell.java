@@ -322,7 +322,7 @@ public class RolapCell implements Cell {
      * Returns appropriate non-virtual cube that will be used
      * for retrieving base star key column.
      */
-    private RolapCube getDrillThroughBaseCube() {
+    public RolapCube getDrillThroughBaseCube() {
         if (result.getCube().isVirtual()) {
             Member[] membersForDrillThrough = this.getMembersForDrillThrough();
             for (Member m : membersForDrillThrough) {
@@ -406,7 +406,7 @@ public class RolapCell implements Cell {
              : visitor.cube;
     }
 
-    private Member[] getMembersForDrillThrough() {
+    public Member[] getMembersForDrillThrough() {
         final Member[] currentMembers = result.getCellMembers(pos);
 
         // replace member if we're dealing with a trivial formula

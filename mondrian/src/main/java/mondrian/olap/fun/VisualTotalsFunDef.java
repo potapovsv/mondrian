@@ -122,10 +122,26 @@ public class VisualTotalsFunDef extends FunDefBase {
             }
             final List<Member> childMemberList =
                 followingDescendants(member, i + 1, list);
-            final Exp exp = makeExpr(childMemberList);
+            final List<Member>  childMemberListWithRealMember = createListWithRealMember(childMemberList);
+            final Exp exp = makeExpr(childMemberListWithRealMember);
             final Validator validator = evaluator.getQuery().createValidator();
             final Exp validatedExp = exp.accept(validator);
-            return new VisualTotalMember(member, name, caption, validatedExp);
+            return new VisualTotalMember(member, name, caption, validatedExp, childMemberListWithRealMember);
+        }
+
+        private  List<Member> createListWithRealMember(List<Member> list)
+        {
+            List<Member> resultList = new ArrayList<Member>();
+            for(Member member: list){
+                if(member instanceof VisualTotalMember) {
+                    VisualTotalMember visualTotalMember = (VisualTotalMember)member;
+                    resultList.addAll(createListWithRealMember(visualTotalMember.getChildMemberList()));
+                }
+                else {
+                    resultList.add(member);
+                }
+            }
+            return resultList;
         }
 
         private List<Member> followingDescendants(
@@ -205,12 +221,14 @@ public class VisualTotalsFunDef extends FunDefBase {
         private final Member member;
         private Exp exp;
         private String caption;
+        private List<Member> childMemberList;
 
         VisualTotalMember(
             Member member,
             String name,
             String caption,
-            final Exp exp)
+            final Exp exp,
+            List<Member> childMemberList)
         {
             super(
                 (RolapMember) member.getParentMember(),
@@ -219,6 +237,7 @@ public class VisualTotalsFunDef extends FunDefBase {
             this.member = member;
             this.caption = caption;
             this.exp = exp;
+            this.childMemberList = childMemberList;
         }
 
         @Override
@@ -327,6 +346,10 @@ public class VisualTotalsFunDef extends FunDefBase {
             default:
                 return super.getPropertyValue(propertyName, matchCase);
             }
+        }
+
+        public List<Member> getChildMemberList() {
+            return this.childMemberList;
         }
     }
 

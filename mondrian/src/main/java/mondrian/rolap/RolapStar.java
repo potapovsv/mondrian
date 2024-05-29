@@ -6,7 +6,7 @@
 //
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2018 Hitachi Vantara and others
-// Copyright (C) 2022 Sergei Semenkov
+// Copyright (C) 2022-2024 Sergei Semenkov
 // All Rights Reserved.
 //
 // jhyde, 12 August, 2001
@@ -1176,6 +1176,7 @@ public class RolapStar {
     public static class Measure extends Column {
         private final String cubeName;
         private final RolapAggregator aggregator;
+        private final String aggregatorImplementation;
 
         public Measure(
             String name,
@@ -1185,13 +1186,30 @@ public class RolapStar {
             MondrianDef.Expression expression,
             Dialect.Datatype datatype)
         {
+            this(name, cubeName, aggregator, null, table, expression, datatype);
+        }
+
+        public Measure(
+                String name,
+                String cubeName,
+                RolapAggregator aggregator,
+                String aggregatorImplementation,
+                Table table,
+                MondrianDef.Expression expression,
+                Dialect.Datatype datatype)
+        {
             super(name, table, expression, datatype);
             this.cubeName = cubeName;
             this.aggregator = aggregator;
+            this.aggregatorImplementation = aggregatorImplementation;
         }
 
         public RolapAggregator getAggregator() {
             return aggregator;
+        }
+
+        public String getAggregatorImplementation() {
+            return this.aggregatorImplementation;
         }
 
         public boolean equals(Object o) {
@@ -1453,6 +1471,7 @@ public class RolapStar {
                 measure.getName(),
                 measure.getCube().getName(),
                 measure.getAggregator(),
+                measure.getAggregatorImplementation(),
                 this,
                 measure.getMondrianDefExpression(),
                 measure.getDatatype());

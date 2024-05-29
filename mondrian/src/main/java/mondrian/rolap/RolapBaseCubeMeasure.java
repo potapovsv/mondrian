@@ -4,7 +4,9 @@
 * http://www.eclipse.org/legal/epl-v10.html.
 * You must accept the terms of that agreement to use this software.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2017 Hitachi Vantara.
+* Copyright (C) 2021-2024 Sergei Semenkov
+* .  All rights reserved.
 */
 
 package mondrian.rolap;
@@ -44,6 +46,7 @@ public class RolapBaseCubeMeasure
      * For SQL generator. Has values "SUM", "COUNT", etc.
      */
     private final RolapAggregator aggregator;
+    private String aggregatorImplementation;
 
     private final RolapCube cube;
     private final Map<String, Annotation> annotationMap;
@@ -82,6 +85,7 @@ public class RolapBaseCubeMeasure
         String formatString,
         MondrianDef.Expression expression,
         String aggregatorName,
+        String aggregatorImplementation,
         String datatype,
         Map<String, Annotation> annotationMap)
     {
@@ -128,6 +132,8 @@ public class RolapBaseCubeMeasure
                 buf.toString());
         }
 
+        this.aggregatorImplementation = aggregatorImplementation;
+
         setProperty(Property.AGGREGATION_TYPE.name, aggregator);
         if (datatype == null) {
             if (aggregator == RolapAggregator.Count
@@ -144,12 +150,34 @@ public class RolapBaseCubeMeasure
         setProperty(Property.DATATYPE.name, datatype);
     }
 
+    RolapBaseCubeMeasure(
+            RolapCube cube,
+            RolapMember parentMember,
+            RolapLevel level,
+            String name,
+            String caption,
+            String description,
+            String formatString,
+            MondrianDef.Expression expression,
+            String aggregatorName,
+            String datatype,
+            Map<String, Annotation> annotationMap)
+    {
+        this(cube, parentMember, level, name, caption,
+                description, formatString, expression, aggregatorName, null,
+                datatype, annotationMap);
+    }
+
     public MondrianDef.Expression getMondrianDefExpression() {
         return expression;
     }
 
     public RolapAggregator getAggregator() {
         return aggregator;
+    }
+
+    public String getAggregatorImplementation() {
+        return this.aggregatorImplementation;
     }
 
     public RolapCube getCube() {

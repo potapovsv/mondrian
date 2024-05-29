@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2003-2005 Julian Hyde and others
 // Copyright (C) 2005-2021 Hitachi Vantara and others
+// Copyright (C) 2021-2024 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -199,7 +200,18 @@ public abstract class RolapAggregator extends EnumeratedValues.BasicValue implem
     }
 
     public String getExpression( String operand ) {
-      return "count(distinct " + operand + ")";
+      return getExpression( operand, null );
+    }
+
+    public String getExpression( String operand, String aggregatorImplementation ) {
+      String result;
+      if(aggregatorImplementation != null) {
+        result = aggregatorImplementation + "(" + operand + ")";
+      }
+      else {
+        result = "count(distinct " + operand + ")";
+      }
+      return result;
     }
 
     @Override
@@ -375,8 +387,17 @@ public abstract class RolapAggregator extends EnumeratedValues.BasicValue implem
    * returns <code>"sum(emp.sal)"</code>.
    */
   public String getExpression( String operand ) {
+    return getExpression( operand, null );
+  }
+
+  public String getExpression( String operand, String aggregatorImplementation ) {
     StringBuilder buf = new StringBuilder( 64 );
-    buf.append( name );
+    if(aggregatorImplementation != null) {
+      buf.append( aggregatorImplementation );
+    }
+    else {
+      buf.append( name );
+    }
     buf.append( '(' );
     if ( distinct ) {
       buf.append( "distinct " );
@@ -385,6 +406,7 @@ public abstract class RolapAggregator extends EnumeratedValues.BasicValue implem
     buf.append( ')' );
     return buf.toString();
   }
+
 
   /**
    * If this is a distinct aggregator, returns the corresponding non-distinct aggregator, otherwise throws an error.

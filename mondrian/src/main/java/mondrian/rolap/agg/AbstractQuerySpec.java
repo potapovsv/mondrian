@@ -6,7 +6,7 @@
 //
 // Copyright (C) 2005-2005 Julian Hyde
 // Copyright (C) 2005-2017 Hitachi Vantara and others
-// Copyright (C) 2021 Sergei Semenkov
+// Copyright (C) 2021-2024 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap.agg;
@@ -74,7 +74,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
             measure.getExpression() == null
                 ? "*"
                 : measure.generateExprString(sqlQuery);
-        String exprOuter = measure.getAggregator().getExpression(exprInner);
+        String exprOuter = measure.getAggregator().getExpression(exprInner, measure.getAggregatorImplementation());
         sqlQuery.addSelect(
             exprOuter,
             measure.getInternalType(),

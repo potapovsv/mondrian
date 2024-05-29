@@ -7,7 +7,7 @@
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2021 Hitachi Vantara and others
 // Copyright (C) 2020-2021 Topsoft
-// Copyright (c) 2021-2022 Sergei Semenkov
+// Copyright (c) 2021-2024 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -553,7 +553,7 @@ public class RolapCube extends CubeBase {
                 this, null, measuresLevel, xmlMeasure.name,
                 xmlMeasure.caption, xmlMeasure.description,
                 xmlMeasure.formatString, measureExp,
-                aggregator, xmlMeasure.datatype,
+                aggregator, xmlMeasure.aggregatorImplementation, xmlMeasure.datatype,
                 RolapHierarchy.createAnnotationMap(xmlMeasure.annotations));
 
         FormatterCreateContext formatterContext =

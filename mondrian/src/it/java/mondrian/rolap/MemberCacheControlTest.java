@@ -11,15 +11,15 @@ package mondrian.rolap;
 
 import mondrian.olap.*;
 import mondrian.olap.CacheControl.MemberEditCommand;
-import mondrian.olap.Hierarchy;
 import mondrian.rolap.agg.AggregationManager;
 import mondrian.server.Execution;
 import mondrian.server.Locus;
 import mondrian.server.Statement;
 import mondrian.test.*;
 
-import org.apache.log4j.*;
-import org.apache.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -528,7 +528,7 @@ public class MemberCacheControlTest extends FoodMartTestCase {
         assertEquals(
             Double.valueOf("74748"),
             aggMgr.getCellFromAllCaches(
-                AggregationManager.makeRequest(cacheRegionMembers)));
+                AggregationManager.makeRequest(cacheRegionMembers), (RolapConnection)conn));
 
         // Now tell the cache that [CA].[Berkeley] is new
         final CacheControl.MemberEditCommand command =
@@ -538,7 +538,7 @@ public class MemberCacheControlTest extends FoodMartTestCase {
         // test that cells have been removed
         assertNull(
             aggMgr.getCellFromAllCaches(
-                AggregationManager.makeRequest(cacheRegionMembers)));
+                AggregationManager.makeRequest(cacheRegionMembers), (RolapConnection)conn));
 
         tc.assertAxisReturns(
             "[Retail].[CA].Children",
@@ -684,7 +684,7 @@ public class MemberCacheControlTest extends FoodMartTestCase {
         assertEquals(
             Double.valueOf("2117"),
             aggMgr.getCellFromAllCaches(
-                AggregationManager.makeRequest(cacheRegionMembers)));
+                AggregationManager.makeRequest(cacheRegionMembers), (RolapConnection)conn));
 
         // Now tell the cache that [CA].[San Francisco] has been removed.
         final CacheControl.MemberEditCommand command =
@@ -699,7 +699,7 @@ public class MemberCacheControlTest extends FoodMartTestCase {
         // test that cells have been removed
         assertNull(
             aggMgr.getCellFromAllCaches(
-                AggregationManager.makeRequest(cacheRegionMembers)));
+                AggregationManager.makeRequest(cacheRegionMembers), (RolapConnection)conn));
 
         // The list of children should be updated.
         tc.assertAxisReturns(
@@ -984,6 +984,7 @@ public class MemberCacheControlTest extends FoodMartTestCase {
      * "Add CacheControl API to flush members from dimension cache"</a>.
      */
     public void testFlushHierarchy() {
+
         final TestContext testContext = getTestContext();
         CacheControlTest.flushCache(testContext);
         final CacheControl cacheControl =
@@ -993,14 +994,12 @@ public class MemberCacheControlTest extends FoodMartTestCase {
                 .getSchema().lookupCube("Sales", true);
 
         final Logger logger = RolapUtil.SQL_LOGGER;
-        final Level level = logger.getLevel();
         final StringWriter sw = new StringWriter();
-        final WriterAppender appender =
-            new WriterAppender(new SimpleLayout(), sw);
-        try {
-            logger.setLevel(Level.DEBUG);
-            logger.addAppender(appender);
+        final Appender appender =
+            Util.makeAppender("testMdcContext", sw, null);
+        Util.addAppender(appender, logger, org.apache.logging.log4j.Level.DEBUG);
 
+        try {
             final Hierarchy storeHierarchy =
                 salesCube.getDimensions()[1].getHierarchies()[0];
             assertEquals("Store", storeHierarchy.getName());
@@ -1133,8 +1132,7 @@ public class MemberCacheControlTest extends FoodMartTestCase {
                     }
                 });
         } finally {
-            logger.setLevel(level);
-            logger.removeAppender(appender);
+            Util.removeAppender(appender, logger);
         }
     }
 

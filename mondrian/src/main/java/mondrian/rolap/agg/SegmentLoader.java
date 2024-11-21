@@ -5,7 +5,7 @@
 // You must accept the terms of that agreement to use this software.
 //
 // Copyright (C) 2002-2005 Julian Hyde
-// Copyright (C) 2005-2020 Hitachi Vantara and others
+// Copyright (C) 2005-2021 Hitachi Vantara and others
 // All Rights Reserved.
 */
 package mondrian.rolap.agg;
@@ -22,8 +22,6 @@ import mondrian.server.Locus;
 import mondrian.server.monitor.SqlStatementEvent;
 import mondrian.spi.*;
 import mondrian.util.*;
-
-import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -53,8 +51,6 @@ import java.util.concurrent.*;
  * @since 24 May 2007
  */
 public class SegmentLoader {
-
-  private static final Logger LOGGER = Logger.getLogger( SegmentLoader.class );
 
   private final SegmentCacheManager cacheMgr;
 
@@ -686,6 +682,7 @@ public class SegmentLoader {
               }
               processedRows.setDouble( columnIndex, val );
             }
+            break;
           default:
             throw Util.unexpected( type );
         }

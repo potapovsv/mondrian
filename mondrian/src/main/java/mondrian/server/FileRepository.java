@@ -5,6 +5,7 @@
 // You must accept the terms of that agreement to use this software.
 //
 // Copyright (C) 2005-2017 Hitachi Vantara and others
+// Copyright (C) 2022 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.server;
@@ -25,7 +26,8 @@ import mondrian.util.LockBox;
 import mondrian.util.Pair;
 import mondrian.xmla.DataSourcesConfig;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import org.olap4j.OlapConnection;
 import org.olap4j.OlapException;
@@ -61,7 +63,7 @@ public class FileRepository implements Repository {
     private static final Object SERVER_INFO_LOCK = new Object();
     private final RepositoryContentFinder repositoryContentFinder;
 
-    private static final Logger LOGGER = Logger.getLogger(MondrianServer.class);
+    private static final Logger LOGGER = LogManager.getLogger(MondrianServer.class);
 
     private static final ScheduledExecutorService executorService =
         Util.getScheduledExecutorService(
@@ -430,6 +432,16 @@ public class FileRepository implements Repository {
     // tests
     RepositoryContentFinder getRepositoryContentFinder() {
         return repositoryContentFinder;
+    }
+
+    public String getContent() {
+        return repositoryContentFinder.getContent();
+    }
+
+    public void setContent(String content) {
+        //set
+        this.repositoryContentFinder.setContent(content);
+        this.clearServerInfo();
     }
 }
 

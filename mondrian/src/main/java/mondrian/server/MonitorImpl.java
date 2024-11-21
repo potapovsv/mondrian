@@ -4,7 +4,7 @@
 // http://www.eclipse.org/legal/epl-v10.html.
 // You must accept the terms of that agreement to use this software.
 //
-// Copyright (C) 2011-2020 Hitachi Vantara
+// Copyright (C) 2011-2021 Hitachi Vantara
 // All Rights Reserved.
 */
 package mondrian.server;
@@ -16,7 +16,8 @@ import mondrian.server.monitor.*;
 import mondrian.server.monitor.MonitorMXBean;
 import mondrian.util.*;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -60,7 +61,7 @@ import java.util.concurrent.BlockingQueue;
  * </ul>
  */
 class MonitorImpl implements Monitor, MonitorMXBean {
-  private static final Logger LOGGER = Logger.getLogger( MonitorImpl.class );
+  private static final Logger LOGGER = LogManager.getLogger( MonitorImpl.class );
   private final Handler handler = new Handler();
 
   protected static final Util.MemoryInfo MEMORY_INFO = Util.getMemoryInfo();
@@ -308,6 +309,8 @@ class MonitorImpl implements Monitor, MonitorMXBean {
     private int cellCacheSegmentCoordinateSum;
     private int cellCacheSegmentCellCount;
     private final String stack;
+    private int expCacheHitCount;
+    private int expCacheMissCount;
 
     public MutableExecutionInfo( MutableStatementInfo stmt, long executionId, String stack ) {
       this.stmt = stmt;
@@ -318,7 +321,7 @@ class MonitorImpl implements Monitor, MonitorMXBean {
     public ExecutionInfo fix() {
       return new ExecutionInfo( stack, executionId, phaseCount, cellCacheRequestCount, cellCacheHitCount,
           cellCacheMissCount, cellCachePendingCount, aggSql.startCount, aggSql.executeCount, aggSql.endCount,
-          aggSql.rowFetchCount, aggSql.executeNanos, aggSql.cellRequestCount );
+          aggSql.rowFetchCount, aggSql.executeNanos, aggSql.cellRequestCount, expCacheHitCount, expCacheMissCount );
     }
   }
 
@@ -611,6 +614,8 @@ class MonitorImpl implements Monitor, MonitorMXBean {
       exec.cellCacheHitCountDelta = 0;
       exec.cellCacheMissCountDelta = 0;
       exec.cellCachePendingCountDelta = 0;
+      exec.expCacheHitCount += event.expCacheHitCount;
+      exec.expCacheMissCount += event.expCacheMissCount;
     }
 
     public Object visit( CellCacheSegmentCreateEvent event ) {

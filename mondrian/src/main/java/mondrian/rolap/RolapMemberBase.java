@@ -20,7 +20,9 @@ import mondrian.spi.PropertyFormatter;
 import mondrian.util.*;
 
 import org.apache.commons.collections.map.Flat3Map;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import org.eigenbase.util.property.StringProperty;
 
@@ -44,7 +46,7 @@ public class RolapMemberBase
      */
     private Comparable orderKey;
     private Boolean isParentChildLeaf;
-    private static final Logger LOGGER = Logger.getLogger(RolapMember.class);
+    private static final Logger LOGGER = LogManager.getLogger(RolapMember.class);
 
     /**
      * Sets a member's parent.
@@ -737,7 +739,10 @@ public class RolapMemberBase
         SchemaReader schemaReader,
         Member seedMember)
     {
-        seedMember = RolapUtil.strip((RolapMember) seedMember);
+        //Next line causes error in access control.
+        //Hierarchy grants put into role as RolapCubeHierarchy
+        //If next line is active - as RolapHierarchy and can't be found later.
+        //seedMember = RolapUtil.strip((RolapMember) seedMember);
 
          // The following are times for executing different set ordinals
          // algorithms for both the FoodMart Sales cube/Store dimension

@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2001-2005 Julian Hyde
 // Copyright (C) 2005-2018 Hitachi Vantara and others
+// Copyright (C) 2022-2024 Sergei Semenkov
 // All Rights Reserved.
 //
 // jhyde, 12 August, 2001
@@ -22,7 +23,9 @@ import mondrian.spi.*;
 import mondrian.util.Bug;
 
 import org.apache.commons.collections.map.ReferenceMap;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -45,7 +48,7 @@ import javax.sql.DataSource;
  * @since 12 August, 2001
  */
 public class RolapStar {
-    private static final Logger LOGGER = Logger.getLogger(RolapStar.class);
+    private static final Logger LOGGER = LogManager.getLogger(RolapStar.class);
 
     private final RolapSchema schema;
 
@@ -167,20 +170,20 @@ public class RolapStar {
         return null;
     }
 
-    public Object getCellFromAllCaches(final CellRequest request) {
+    public Object getCellFromAllCaches(final CellRequest request, RolapConnection rolapConnection) {
         // First, try the local/thread cache.
         Object result = getCellFromCache(request, null);
         if (result != null) {
             return result;
         }
         // Now ask the segment cache manager.
-        return getCellFromExternalCache(request);
+        return getCellFromExternalCache(request, rolapConnection);
     }
 
-    private Object getCellFromExternalCache(CellRequest request) {
+    private Object getCellFromExternalCache(CellRequest request, RolapConnection rolapConnection) {
         final SegmentWithData segment =
             Locus.peek().getServer().getAggregationManager()
-                .cacheMgr.peek(request);
+                .getCacheMgr(rolapConnection).peek(request);
         if (segment == null) {
             return null;
         }
@@ -1173,6 +1176,7 @@ public class RolapStar {
     public static class Measure extends Column {
         private final String cubeName;
         private final RolapAggregator aggregator;
+        private final String aggregatorImplementation;
 
         public Measure(
             String name,
@@ -1182,13 +1186,30 @@ public class RolapStar {
             MondrianDef.Expression expression,
             Dialect.Datatype datatype)
         {
+            this(name, cubeName, aggregator, null, table, expression, datatype);
+        }
+
+        public Measure(
+                String name,
+                String cubeName,
+                RolapAggregator aggregator,
+                String aggregatorImplementation,
+                Table table,
+                MondrianDef.Expression expression,
+                Dialect.Datatype datatype)
+        {
             super(name, table, expression, datatype);
             this.cubeName = cubeName;
             this.aggregator = aggregator;
+            this.aggregatorImplementation = aggregatorImplementation;
         }
 
         public RolapAggregator getAggregator() {
             return aggregator;
+        }
+
+        public String getAggregatorImplementation() {
+            return this.aggregatorImplementation;
         }
 
         public boolean equals(Object o) {
@@ -1450,6 +1471,7 @@ public class RolapStar {
                 measure.getName(),
                 measure.getCube().getName(),
                 measure.getAggregator(),
+                measure.getAggregatorImplementation(),
                 this,
                 measure.getMondrianDefExpression(),
                 measure.getDatatype());
@@ -1744,7 +1766,6 @@ public class RolapStar {
             boolean failIfExists,
             boolean joinToParent)
         {
-            query.addFrom(relation, alias, failIfExists);
             Util.assertTrue((parent == null) == (joinCondition == null));
             if (joinToParent) {
                 if (parent != null) {
@@ -1754,6 +1775,7 @@ public class RolapStar {
                     query.addWhere(joinCondition.toString(query));
                 }
             }
+            query.addFrom(relation, alias, failIfExists);
         }
 
         /**
@@ -1893,7 +1915,7 @@ public class RolapStar {
     }
 
     public static class Condition {
-        private static final Logger LOGGER = Logger.getLogger(Condition.class);
+        private static final Logger LOGGER = LogManager.getLogger(Condition.class);
 
         private final MondrianDef.Expression left;
         private final MondrianDef.Expression right;

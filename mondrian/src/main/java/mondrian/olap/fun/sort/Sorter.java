@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2002-2005 Julian Hyde
 // Copyright (C) 2005-2020 Hitachi Vantara and others
+// Copyright (C) 2021 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.olap.fun.sort;
@@ -20,6 +21,7 @@ import mondrian.calc.impl.DelegatingTupleList;
 import mondrian.olap.Dimension;
 import mondrian.olap.Evaluator;
 import mondrian.olap.Member;
+import mondrian.olap.MondrianProperties;
 import mondrian.olap.Util;
 import mondrian.olap.fun.MemberOrderKeyFunDef;
 import mondrian.olap.type.ScalarType;
@@ -31,7 +33,9 @@ import mondrian.server.Execution;
 import mondrian.util.CancellationChecker;
 import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.collections.comparators.ComparatorChain;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -56,7 +60,7 @@ public class Sorter {
   private static final String SORT_TIMING_NAME = "Sort";
   private static final String SORT_EVAL_TIMING_NAME = "EvalForSort";
 
-  private static final Logger LOGGER = Logger.getLogger( Sorter.class );
+  private static final Logger LOGGER = LogManager.getLogger( Sorter.class );
 
   /**
    * For each member in a list, evaluates an expression and creates a map from members to values.
@@ -738,11 +742,22 @@ public class Sorter {
         return -1;
       }
     }
-    final Comparable k1 = m1.getOrderKey();
-    final Comparable k2 = m2.getOrderKey();
-    if ( ( k1 != null ) && ( k2 != null ) ) {
-      return k1.compareTo( k2 );
-    } else {
+    if(
+        MondrianProperties.instance().CompareSiblingsByOrderKey.get()
+        &&
+        ((mondrian.rolap.RolapLevel)m1.getLevel()).getOrdinalExp() != null
+    ) {
+      final Comparable k1 = m1.getOrderKey();
+      final Comparable k2 = m2.getOrderKey();
+      if ( ( k1 != null ) && ( k2 != null ) && ( k1.getClass() == k2.getClass() ) ) {
+        return k1.compareTo( k2 );
+      } else {
+        final String caption1 = m1.getCaption();
+        final String caption2 = m2.getCaption();
+        return caption1.compareTo( caption2 );
+      }
+    }
+    else {
       final int ordinal1 = m1.getOrdinal();
       final int ordinal2 = m2.getOrdinal();
       return ( ordinal1 == ordinal2 )

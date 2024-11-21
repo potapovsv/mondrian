@@ -5,52 +5,10 @@
 // You must accept the terms of that agreement to use this software.
 //
 // Copyright (C) 2001-2005 Julian Hyde
-// Copyright (C) 2005-2020 Hitachi Vantara and others
+// Copyright (C) 2005-2021 Hitachi Vantara and others
 // All Rights Reserved.
 */
 package mondrian.olap;
-
-import mondrian.mdx.DimensionExpr;
-import mondrian.mdx.HierarchyExpr;
-import mondrian.mdx.LevelExpr;
-import mondrian.mdx.MemberExpr;
-import mondrian.mdx.NamedSetExpr;
-import mondrian.mdx.ParameterExpr;
-import mondrian.mdx.QueryPrintWriter;
-import mondrian.mdx.ResolvedFunCall;
-import mondrian.mdx.UnresolvedFunCall;
-import mondrian.olap.fun.FunUtil;
-import mondrian.olap.fun.Resolver;
-import mondrian.olap.fun.sort.Sorter;
-import mondrian.olap.type.Type;
-import mondrian.resource.MondrianResource;
-import mondrian.rolap.RolapCube;
-import mondrian.rolap.RolapCubeDimension;
-import mondrian.rolap.RolapLevel;
-import mondrian.rolap.RolapMember;
-import mondrian.rolap.RolapUtil;
-import mondrian.spi.UserDefinedFunction;
-import mondrian.util.ArraySortedSet;
-import mondrian.util.ConcatenableList;
-import mondrian.util.Pair;
-import mondrian.util.UtilCompatible;
-import mondrian.util.UtilCompatibleJdk16;
-import org.apache.commons.collections.keyvalue.AbstractMapEntry;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.provider.http.HttpFileObject;
-import org.apache.log4j.Logger;
-import org.eigenbase.xom.XOMUtil;
-import org.olap4j.impl.Olap4jUtil;
-import org.olap4j.mdx.IdentifierNode;
-import org.olap4j.mdx.IdentifierSegment;
-import org.olap4j.mdx.KeySegment;
-import org.olap4j.mdx.NameSegment;
-import org.olap4j.mdx.Quoting;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -115,6 +73,60 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections.keyvalue.AbstractMapEntry;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.VFS;
+import org.apache.commons.vfs2.provider.http.HttpFileObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.eigenbase.xom.XOMUtil;
+import org.olap4j.impl.Olap4jUtil;
+import org.olap4j.mdx.IdentifierNode;
+import org.olap4j.mdx.IdentifierSegment;
+import org.olap4j.mdx.KeySegment;
+import org.olap4j.mdx.NameSegment;
+import org.olap4j.mdx.Quoting;
+
+import mondrian.calc.Calc;
+import mondrian.calc.CalcWriter;
+import mondrian.mdx.DimensionExpr;
+import mondrian.mdx.HierarchyExpr;
+import mondrian.mdx.LevelExpr;
+import mondrian.mdx.MemberExpr;
+import mondrian.mdx.NamedSetExpr;
+import mondrian.mdx.ParameterExpr;
+import mondrian.mdx.QueryPrintWriter;
+import mondrian.mdx.ResolvedFunCall;
+import mondrian.mdx.UnresolvedFunCall;
+import mondrian.olap.fun.FunUtil;
+import mondrian.olap.fun.Resolver;
+import mondrian.olap.fun.sort.Sorter;
+import mondrian.olap.type.Type;
+import mondrian.resource.MondrianResource;
+import mondrian.rolap.RolapCube;
+import mondrian.rolap.RolapCubeDimension;
+import mondrian.rolap.RolapLevel;
+import mondrian.rolap.RolapMember;
+import mondrian.rolap.RolapUtil;
+import mondrian.spi.ProfileHandler;
+import mondrian.spi.UserDefinedFunction;
+import mondrian.util.ArraySortedSet;
+import mondrian.util.ConcatenableList;
+import mondrian.util.Pair;
+import mondrian.util.UtilCompatible;
+import mondrian.util.UtilCompatibleJdk16;
+
 /**
  * Utility functions used throughout mondrian. All methods are static.
  *
@@ -125,7 +137,7 @@ public class Util extends XOMUtil {
 
     public static final String nl = System.getProperty("line.separator");
 
-    private static final Logger LOGGER = Logger.getLogger(Util.class);
+    private static final Logger LOGGER = LogManager.getLogger(Util.class);
 
     /**
      * Placeholder which indicates a value NULL.
@@ -988,56 +1000,49 @@ public class Util extends XOMUtil {
     {
         // First, look for a calculated member defined in the query.
         final String fullName = quoteMdxIdentifier(segments);
-        // Look for any kind of object (member, level, hierarchy,
-        // dimension) in the cube. Use a schema reader without restrictions.
         final SchemaReader schemaReaderSansAc =
             schemaReader.withoutAccessControl().withLocus();
         final Cube cube = q.getCube();
-        OlapElement olapElement =
-            schemaReaderSansAc.lookupCompound(
-                cube, segments, false, Category.Unknown);
-        if (olapElement != null) {
-            Role role = schemaReader.getRole();
-            if (!role.canAccess(olapElement)) {
-                olapElement = null;
-            }
-            if (olapElement instanceof Member) {
-                olapElement =
-                    schemaReader.substitute((Member) olapElement);
-            }
-        }
-        if (olapElement == null) {
-            if (allowProp && segments.size() > 1) {
-                List<Id.Segment> segmentsButOne =
+        // Check level properties before Member.
+        // Otherwise it will query all level members to find member with property name.
+        if (allowProp && segments.size() > 1) {
+            List<Id.Segment> segmentsButOne =
                     segments.subList(0, segments.size() - 1);
-                final Id.Segment lastSegment = last(segments);
-                final String propertyName =
+            final Id.Segment lastSegment = last(segments);
+            final String propertyName =
                     lastSegment instanceof Id.NameSegment
-                        ? ((Id.NameSegment) lastSegment).getName()
-                        : null;
-                final Member member =
+                            ? ((Id.NameSegment) lastSegment).getName()
+                            : null;
+            final Member member =
                     (Member) schemaReaderSansAc.lookupCompound(
-                        cube, segmentsButOne, false, Category.Member);
-                if (member != null
+                            cube, segmentsButOne, false, Category.Member);
+            if (member != null
                     && propertyName != null
                     && isValidProperty(propertyName, member.getLevel()))
-                {
-                    return new UnresolvedFunCall(
+            {
+                return new UnresolvedFunCall(
                         propertyName, Syntax.Property, new Exp[] {
-                            createExpr(member)});
-                }
-                final Level level =
+                        createExpr(member)});
+            }
+            final Level level =
                     (Level) schemaReaderSansAc.lookupCompound(
-                        cube, segmentsButOne, false, Category.Level);
-                if (level != null
+                            cube, segmentsButOne, false, Category.Level);
+            if (level != null
                     && propertyName != null
                     && isValidProperty(propertyName, level))
-                {
-                    return new UnresolvedFunCall(
+            {
+                return new UnresolvedFunCall(
                         propertyName, Syntax.Property, new Exp[] {
-                            createExpr(level)});
-                }
+                        createExpr(level)});
             }
+        }
+        // Look for any kind of object (member, level, hierarchy,
+        // dimension) in the cube. Use a schema reader without restrictions.
+        OlapElement olapElement =
+                schemaReaderSansAc.lookupCompound(
+                        cube, segments, false, Category.Unknown);
+
+        if(olapElement == null) {
             // if we're in the middle of loading the schema, the property has
             // been set to ignore invalid members, and the member is
             // non-existent, return the null member corresponding to the
@@ -1048,22 +1053,33 @@ public class Util extends XOMUtil {
                 olapElement = null;
                 while (nameLen > 0 && olapElement == null) {
                     List<Id.Segment> partialName =
-                        segments.subList(0, nameLen);
+                            segments.subList(0, nameLen);
                     olapElement = schemaReaderSansAc.lookupCompound(
-                        cube, partialName, false, Category.Unknown);
+                            cube, partialName, false, Category.Unknown);
                     nameLen--;
                 }
                 if (olapElement != null) {
                     olapElement = olapElement.getHierarchy().getNullMember();
                 } else {
                     throw MondrianResource.instance().MdxChildObjectNotFound.ex(
-                        fullName, cube.getQualifiedName());
+                            fullName, cube.getQualifiedName());
                 }
             } else {
                 throw MondrianResource.instance().MdxChildObjectNotFound.ex(
-                    fullName, cube.getQualifiedName());
+                        fullName, cube.getQualifiedName());
             }
         }
+
+        Role role = schemaReader.getRole();
+        if (!role.canAccess(olapElement)) {
+            throw MondrianResource.instance().MdxChildObjectNotFound.ex(
+                    fullName, cube.getQualifiedName());
+        }
+        if (olapElement instanceof Member) {
+            olapElement =
+                    schemaReader.substitute((Member) olapElement);
+        }
+
         // keep track of any measure members referenced; these will be used
         // later to determine if cross joins on virtual cubes can be
         // processed natively
@@ -4479,14 +4495,14 @@ public class Util extends XOMUtil {
                     iterator()
                 {
                     return new Iterator<Entry<K, V>>() {
-                        private int pt = -1;
+                        private int pt = 0;
                         public void remove() {
                             throw new UnsupportedOperationException();
                         }
                         @SuppressWarnings("unchecked")
                         public Entry<K, V> next() {
                             return new AbstractMapEntry(
-                                list.get(++pt), null) {};
+                                list.get(pt++), null) {};
                         }
                         public boolean hasNext() {
                             return pt < list.size();
@@ -4561,6 +4577,77 @@ public class Util extends XOMUtil {
             }
         }
     }
+    
+  /**
+   * Called during major steps of executing a MDX query to provide insight into Calc calls/times
+   * and key function calls/times.
+   * 
+   * @param handler
+   * @param title
+   * @param calc
+   * @param timing
+   */
+  public static void explain( ProfileHandler handler, String title, Calc calc, QueryTiming timing ) {
+    if ( handler == null ) {
+      return;
+    }
+    final StringWriter stringWriter = new StringWriter();
+    final PrintWriter printWriter = new PrintWriter( stringWriter );
+    final CalcWriter calcWriter = new CalcWriter( printWriter, true );
+    printWriter.println( title );
+    if ( calc != null ) {
+      calc.accept( calcWriter );
+    }
+    printWriter.close();
+    handler.explain( stringWriter.toString(), timing );
+  }
+
+  public static void addAppender(Appender appender, Logger logger, org.apache.logging.log4j.Level level) {
+    LoggerContext ctx = (LoggerContext) LogManager.getContext( false );
+    Configuration config = ctx.getConfiguration();
+    appender.start();
+    config.addAppender( appender );
+
+    LoggerConfig loggerConfig = config.getLoggerConfig( logger.getName() );
+    LoggerConfig specificConfig = loggerConfig;
+
+    if ( !loggerConfig.getName().equals( logger.getName() ) ) {
+      specificConfig = new LoggerConfig( logger.getName(), null, true );
+      specificConfig.setParent( loggerConfig );
+      config.addLogger( logger.getName(), specificConfig );
+    }
+
+    specificConfig.addAppender( appender, level, null );
+    ctx.updateLoggers();
+  }
+
+  public static void removeAppender(Appender appender, Logger logger) {
+    appender.stop();
+    LoggerContext ctx = (LoggerContext) LogManager.getContext( false );
+    Configuration config = ctx.getConfiguration();
+    LoggerConfig loggerConfig = config.getLoggerConfig( logger.getName() );
+    loggerConfig.removeAppender( appender.getName() );
+    ctx.updateLoggers();
+  }
+
+  public static Appender makeAppender(
+      String name,
+      StringWriter sw,
+      String layout)
+  {
+    if (layout == null) {
+      layout = PatternLayout.createDefaultLayout().getConversionPattern();
+    }
+    return WriterAppender.newBuilder()
+        .setName(name)
+        .setLayout(PatternLayout.newBuilder().withPattern(layout).build())
+        .setTarget(sw)
+        .build();
+  }
+  
+  public static void setLevel( Logger logger, org.apache.logging.log4j.Level level ) {
+    Configurator.setLevel( logger.getName(), level );
+  }
 }
 
 // End Util.java

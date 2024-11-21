@@ -6,6 +6,7 @@
 //
 // Copyright (C) 2003-2005 Julian Hyde
 // Copyright (C) 2005-2017 Hitachi Vantara
+// Copyright (C) 2021 Sergei Semenkov
 // All Rights Reserved.
 */
 package mondrian.rolap;
@@ -18,7 +19,8 @@ import mondrian.olap.type.StringType;
 import mondrian.rolap.sql.MemberChildrenConstraint;
 import mondrian.rolap.sql.TupleConstraint;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import org.eigenbase.util.property.Property;
 
@@ -47,7 +49,7 @@ public class RolapSchemaReader
     private final SqlConstraintFactory sqlConstraintFactory =
         SqlConstraintFactory.instance();
     private static final Logger LOGGER =
-        Logger.getLogger(RolapSchemaReader.class);
+        LogManager.getLogger(RolapSchemaReader.class);
 
     /**
      * Creates a RolapSchemaReader.
@@ -562,7 +564,12 @@ public class RolapSchemaReader
 
     public List<Member> getLevelMembers(Level level, boolean includeCalculated)
     {
-        List<Member> members = getLevelMembers(level, null);
+        return getLevelMembers(level, includeCalculated, null);
+    }
+
+    public List<Member> getLevelMembers(Level level, boolean includeCalculated, Evaluator context)
+    {
+        List<Member> members = getLevelMembers(level, context);
         if (!includeCalculated) {
             members = SqlConstraintUtils.removeCalculatedMembers(members);
         }

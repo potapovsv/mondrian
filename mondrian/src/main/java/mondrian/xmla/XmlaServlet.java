@@ -6,12 +6,15 @@
 //
 // Copyright (C) 2003-2005 Julian Hyde
 // Copyright (C) 2005-2017 Hitachi Vantara
+// Copyright (C) 2021 Topsoft
+// Copyright (c) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 */
 
 package mondrian.xmla;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import org.w3c.dom.Element;
 
@@ -32,7 +35,7 @@ public abstract class XmlaServlet
     extends HttpServlet
     implements XmlaConstants
 {
-    protected static final Logger LOGGER = Logger.getLogger(XmlaServlet.class);
+    protected static final Logger LOGGER = LogManager.getLogger(XmlaServlet.class);
 
     public static final String PARAM_DATASOURCES_CONFIG = "DataSourcesConfig";
     public static final String PARAM_OPTIONAL_DATASOURCE_CONFIG =
@@ -78,6 +81,7 @@ public abstract class XmlaServlet
     }
 
     public XmlaServlet() {
+        LOGGER.info("Application working directory: \"" + new java.io.File(".").getAbsolutePath() + "\"");
     }
 
 
@@ -375,6 +379,16 @@ public abstract class XmlaServlet
                 handleFault(response, responseSoapParts, phase, xex);
                 phase = Phase.SEND_ERROR;
                 marshallSoapMessage(response, responseSoapParts, mimeType);
+            }
+
+            String sessionId = (String)context.get(CONTEXT_XMLA_SESSION_ID);
+            if(sessionId != null) {
+                if(((String)context.get(CONTEXT_XMLA_SESSION_STATE)).equals(CONTEXT_XMLA_SESSION_STATE_END)) {
+                    mondrian.server.Session.close(sessionId);
+                }
+                else {
+                    mondrian.server.Session.checkIn(sessionId);
+                }
             }
         } catch (Throwable t) {
             LOGGER.error("Unknown Error when handling XML/A message", t);

@@ -19,7 +19,8 @@ import mondrian.rolap.aggmatcher.AggStar;
 import mondrian.server.Locus;
 import mondrian.util.Pair;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.PrintWriter;
 import java.util.*;
@@ -38,14 +39,17 @@ public class AggregationManager extends RolapAggregationManager {
         MondrianProperties.instance();
 
     private static final Logger LOGGER =
-        Logger.getLogger(AggregationManager.class);
+        LogManager.getLogger(AggregationManager.class);
 
     public final SegmentCacheManager cacheMgr;
+
+    private MondrianServer server;
 
     /**
      * Creates the AggregationManager.
      */
     public AggregationManager(MondrianServer server) {
+        this.server = server;
         if (properties.EnableCacheHitCounters.get()) {
             LOGGER.error(
                 "Property " + properties.EnableCacheHitCounters.getPath()
@@ -126,17 +130,18 @@ public class AggregationManager extends RolapAggregationManager {
     {
         return new CacheControlImpl(connection) {
             protected void flushNonUnion(final CellRegion region) {
+                SegmentCacheManager segmentCacheManager = getCacheMgr(connection);
                 final SegmentCacheManager.FlushResult result =
-                    cacheMgr.execute(
+                    segmentCacheManager.execute(
                         new SegmentCacheManager.FlushCommand(
                             Locus.peek(),
-                            cacheMgr,
+                            segmentCacheManager,
                             region,
                             this));
                 final List<Future<Boolean>> futures =
                     new ArrayList<Future<Boolean>>();
                 for (Callable<Boolean> task : result.tasks) {
-                    futures.add(cacheMgr.cacheExecutor.submit(task));
+                    futures.add(segmentCacheManager.cacheExecutor.submit(task));
                 }
                 for (Future<Boolean> future : futures) {
                     Util.discard(Util.safeGet(future, "Flush cache"));
@@ -184,9 +189,9 @@ public class AggregationManager extends RolapAggregationManager {
         return measure.getStar().getCellFromCache(request, pinSet);
     }
 
-    public Object getCellFromAllCaches(CellRequest request) {
+    public Object getCellFromAllCaches(CellRequest request, RolapConnection rolapConnection) {
         final RolapStar.Measure measure = request.getMeasure();
-        return measure.getStar().getCellFromAllCaches(request);
+        return measure.getStar().getCellFromAllCaches(request, rolapConnection);
     }
 
     public String getDrillThroughSql(
@@ -554,8 +559,21 @@ System.out.println(buf.toString());
     {
     }
 
-    public SegmentCacheManager getCacheMgr() {
-      return cacheMgr;
+
+    public SegmentCacheManager getCacheMgr(RolapConnection connection)  {
+        if(connection == null || !MondrianProperties.instance().EnableSessionCaching.get()) {
+            return cacheMgr;
+        }
+        else {
+            final String sessionId = connection.getConnectInfo().get("sessionId");
+            mondrian.server.Session session = mondrian.server.Session.getWithoutCheck(sessionId);
+
+            if(session == null) {
+                return cacheMgr;
+            }
+
+            return session.getOrCreateSegmentCacheManager(this.server);
+        }
     }
 
 }

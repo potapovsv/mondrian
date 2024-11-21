@@ -5,7 +5,8 @@
 // You must accept the terms of that agreement to use this software.
 //
 // Copyright (C) 2001-2005 Julian Hyde
-// Copyright (C) 2005-2020 Hitachi Vantara and others
+// Copyright (C) 2005-2021 Hitachi Vantara and others
+// Copyright (C) 2021-2022 Sergei Semenkov
 // All Rights Reserved.
 //
 // jhyde, 10 August, 2001
@@ -22,7 +23,8 @@ import mondrian.server.Statement;
 import mondrian.spi.Dialect;
 import mondrian.util.*;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.*;
 
@@ -65,7 +67,7 @@ import java.util.*;
  * @since 10 August, 2001
  */
 public class RolapEvaluator implements Evaluator {
-  private static final Logger LOGGER = Logger.getLogger( RolapEvaluator.class );
+  private static final Logger LOGGER = LogManager.getLogger( RolapEvaluator.class );
 
   /**
    * Dummy value to represent null results in the expression cache.
@@ -363,6 +365,10 @@ public class RolapEvaluator implements Evaluator {
       commands[commandCount++] = Command.SET_CELL_READER;
       this.cellReader = cellReader;
     }
+  }
+
+  public CellReader getCellReader() {
+    return this.cellReader;
   }
 
   public final RolapCube getCube() {
@@ -1023,12 +1029,20 @@ public class RolapEvaluator implements Evaluator {
    * which the expression is dependent upon.
    */
   private Object getExpResultCacheKey( ExpCacheDescriptor descriptor ) {
+    boolean includeAggregationList = false;
+    if ( aggregationLists != null && !aggregationLists.isEmpty() ) {
+      // Don't include empty aggregation lists in the cache key or we'll get
+      // a ton of cache misses due to empty collections with different hash codes
+      // across different RolapEvaluators
+      includeAggregationList = true;
+    }
+
     // in NON EMPTY mode the result depends on everything, e.g.
     // "NON EMPTY [Customer].[Name].members" may return different results
     // for 1997-01 and 1997-02
     final List<Object> key;
     if ( nonEmpty ) {
-      key = new ArrayList<Object>( currentMembers.length + 1 );
+      key = new ArrayList<>( currentMembers.length + ( includeAggregationList ? 2 : 1 ) );
       key.add( descriptor.getExp() );
       // noinspection ManualArrayToCollectionCopy
       for ( RolapMember currentMember : currentMembers ) {
@@ -1036,13 +1050,17 @@ public class RolapEvaluator implements Evaluator {
       }
     } else {
       final int[] hierarchyOrdinals = descriptor.getDependentHierarchyOrdinals();
-      key = new ArrayList<Object>( hierarchyOrdinals.length + 1 );
+      key = new ArrayList<>( hierarchyOrdinals.length + ( includeAggregationList ? 2 : 1 ) );
       key.add( descriptor.getExp() );
       for ( final int hierarchyOrdinal : hierarchyOrdinals ) {
         final Member member = currentMembers[hierarchyOrdinal];
         assert member != null;
         key.add( member );
       }
+    }
+    // See MONDRIAN-2713
+    if ( includeAggregationList ) {
+      key.add( aggregationLists );
     }
     return key;
   }

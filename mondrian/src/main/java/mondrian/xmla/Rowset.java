@@ -13,10 +13,10 @@ package mondrian.xmla;
 
 import mondrian.olap.Util;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import org.olap4j.OlapConnection;
-import org.olap4j.impl.LcidLocale;
 import org.olap4j.metadata.Catalog;
 
 import java.sql.SQLException;
@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * @since May 2, 2003
  */
 abstract class Rowset implements XmlaConstants {
-    protected static final Logger LOGGER = Logger.getLogger(Rowset.class);
+    protected static final Logger LOGGER = LogManager.getLogger(Rowset.class);
 
     protected final RowsetDefinition rowsetDefinition;
     protected final Map<String, Object> restrictions;
@@ -42,7 +42,6 @@ abstract class Rowset implements XmlaConstants {
         new HashMap<String, String>();
     protected final XmlaRequest request;
     protected final XmlaHandler handler;
-    private final RowsetDefinition.Column[] restrictedColumns;
     protected final boolean deep;
 
     /**
@@ -104,9 +103,6 @@ abstract class Rowset implements XmlaConstants {
             list.add(column);
         }
         list = pruneRestrictions(list);
-        this.restrictedColumns =
-            list.toArray(
-                new RowsetDefinition.Column[list.size()]);
         boolean deep = false;
         for (Map.Entry<String, String> propertyEntry : properties.entrySet()) {
             String propertyName = propertyEntry.getKey();
@@ -495,6 +491,24 @@ abstract class Rowset implements XmlaConstants {
         } else {
             return Util.trueFunctor();
         }
+    }
+
+    public List<String> getRestriction(RowsetDefinition.Column column) {
+        final Object restriction = restrictions.get(column.name);
+        ArrayList<String> restrictionList;
+
+        if (restriction == null) {
+            return null;
+        } else if (restriction instanceof List) {
+            restrictionList = new ArrayList<String>();
+            for(Object o: (List)restriction) {
+                restrictionList.add(o.toString());
+            }
+        } else {
+            restrictionList = new ArrayList<String>();
+            restrictionList.add(restriction.toString());
+        }
+        return restrictionList;
     }
 
     /**
